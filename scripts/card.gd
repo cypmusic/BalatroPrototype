@@ -385,16 +385,69 @@ func _draw_face_card(rect: Rect2, suit_color: Color) -> void:
 	var texture = _get_face_texture()
 
 	if texture != null:
-		## 有人物图片 - 居中绘制
+		## === 人物图片区域（给角标留空间）===
+		var margin_top = 52.0     # 上方留给角标
+		var margin_bottom = 52.0  # 下方留给角标
+		var margin_side = 10.0    # 左右边距
+
+		var img_rect = Rect2(
+			rect.position.x + margin_side,
+			rect.position.y + margin_top,
+			rect.size.x - margin_side * 2,
+			rect.size.y - margin_top - margin_bottom
+		)
+
+		## 图片区域装饰底色（比卡牌底色稍深，作为图片背景）
+		var frame_bg = Color(0.88, 0.85, 0.79)
+		_draw_rounded_rect(img_rect, 4.0, frame_bg)
+
+		## 绘制人物图片（裁剪填满区域）
 		var tex_size = texture.get_size()
-		var target_w = CARD_WIDTH - 28
-		var target_h = CARD_HEIGHT - 58
-		var scale_factor = minf(target_w / tex_size.x, target_h / tex_size.y)
+		var scale_factor = maxf(img_rect.size.x / tex_size.x, img_rect.size.y / tex_size.y)
 		var draw_size = tex_size * scale_factor
-		var draw_pos = center - draw_size / 2 + Vector2(0, 2)
+		var draw_pos = img_rect.get_center() - draw_size / 2
 		draw_texture_rect(texture, Rect2(draw_pos, draw_size), false)
-		## 人物牌底部加花色小标
-		_draw_suit_symbol(Vector2(center.x, rect.position.y + rect.size.y - 24), suit_color, 16, false)
+
+		## 四边渐变遮罩 - 让图片边缘柔和过渡到卡牌底色
+		var fade_w = 8.0
+		var card_bg = CARD_BG_TOP
+		if is_selected:
+			card_bg = CARD_BG_SELECTED_TOP
+		## 上边渐变
+		for i in range(int(fade_w)):
+			var alpha = 1.0 - float(i) / fade_w
+			var y = img_rect.position.y + i
+			draw_line(Vector2(img_rect.position.x, y), Vector2(img_rect.position.x + img_rect.size.x, y),
+				Color(card_bg.r, card_bg.g, card_bg.b, alpha), 1.0)
+		## 下边渐变
+		for i in range(int(fade_w)):
+			var alpha = 1.0 - float(i) / fade_w
+			var y = img_rect.position.y + img_rect.size.y - i
+			draw_line(Vector2(img_rect.position.x, y), Vector2(img_rect.position.x + img_rect.size.x, y),
+				Color(card_bg.r, card_bg.g, card_bg.b, alpha), 1.0)
+		## 左边渐变
+		for i in range(int(fade_w)):
+			var alpha = 1.0 - float(i) / fade_w
+			var x = img_rect.position.x + i
+			draw_line(Vector2(x, img_rect.position.y), Vector2(x, img_rect.position.y + img_rect.size.y),
+				Color(card_bg.r, card_bg.g, card_bg.b, alpha), 1.0)
+		## 右边渐变
+		for i in range(int(fade_w)):
+			var alpha = 1.0 - float(i) / fade_w
+			var x = img_rect.position.x + img_rect.size.x - i
+			draw_line(Vector2(x, img_rect.position.y), Vector2(x, img_rect.position.y + img_rect.size.y),
+				Color(card_bg.r, card_bg.g, card_bg.b, alpha), 1.0)
+
+		## 图片区域装饰边框
+		var frame_color = Color(suit_color.r, suit_color.g, suit_color.b, 0.25)
+		_draw_rounded_rect_outline(img_rect, 4.0, frame_color, 1.5)
+
+		## 内角装饰（图片区域四角的小花色符号）
+		var deco_size = 10.0
+		var deco_color = Color(suit_color.r, suit_color.g, suit_color.b, 0.4)
+		_draw_suit_symbol(Vector2(img_rect.position.x + 8, img_rect.position.y + 12), deco_color, deco_size, false)
+		_draw_suit_symbol(Vector2(img_rect.position.x + img_rect.size.x - 8, img_rect.position.y + 12), deco_color, deco_size, false)
+
 	else:
 		## 无图片时的备用绘制 - 精致的字母 + 花色装饰
 		_draw_face_fallback(rect, suit_color)
