@@ -1,0 +1,24 @@
+# Godot
+.godot/
+*.import
+
+# Export
+export/
+*.pck
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backups
+*.tmp
+*.bak
+
+# Audio files (protect music assets)
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.aac
+audio/
