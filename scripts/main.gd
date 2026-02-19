@@ -1,5 +1,5 @@
 ## main.gd
-## 游戏主场景 V0.072b — TarotEffect/BossEffect 抽取 + 中文字体修复
+## 游戏主场景 V0.075 — 卡牌增强 + Voucher 系统
 ## 架构: 场景树化 + 状态单例 + 效果处理器
 extends Node2D
 
@@ -44,6 +44,9 @@ var pending_score_result: Dictionary = {}
 var pending_play_cards: Array = []
 var exit_cards_remaining: int = 0
 var discard_exit_remaining: int = 0
+
+## ========== Voucher 状态 ==========
+var owned_voucher_ids: Array = []
 
 ## ========== 快捷引用 ==========
 var GS: Node  ## GameState
@@ -115,6 +118,31 @@ func _ready() -> void:
 
 	## 创建标题界面（唯一仍需动态创建的节点，因为通关后要重建）
 	_create_title_screen()
+
+## ========== Voucher 辅助 ==========
+
+func has_voucher(voucher_id: String) -> bool:
+	return voucher_id in owned_voucher_ids
+
+func _apply_voucher_bonuses() -> void:
+	## 在每回合开始时应用 voucher 加成
+	for vid in owned_voucher_ids:
+		var v = VoucherDatabase.get_voucher_by_id(vid)
+		if v == null:
+			continue
+		match v.effect:
+			VoucherData.VoucherEffect.BONUS_HAND:
+				GS.hands_remaining += int(v.value)
+			VoucherData.VoucherEffect.BONUS_DISCARD:
+				GS.discards_remaining += int(v.value)
+			VoucherData.VoucherEffect.INTEREST_CAP_UP:
+				## 利息上限提升（存在 GameState 中处理）
+				pass
+			VoucherData.VoucherEffect.JOKER_SLOT:
+				joker_slot.MAX_JOKERS = 5 + int(v.value)
+			VoucherData.VoucherEffect.CONSUMABLE_SLOT:
+				consumable_slot.MAX_CONSUMABLES = 2 + int(v.value)
+			## REROLL_DISCOUNT 和 SHOP_DISCOUNT 在 shop.gd 中处理
 
 ## ========== 标题界面（动态创建，因为通关后需要重建）==========
 
@@ -188,6 +216,8 @@ func _open_blind_select() -> void:
 func _on_blind_selected(blind_type: int, boss) -> void:
 	var target = BlindData.get_blind_target(GS.current_ante, blind_type as BlindData.BlindType)
 	GS.start_round(blind_type, boss)
+	## 应用 Voucher 加成（额外手数/弃牌）
+	_apply_voucher_bonuses()
 	score_display.set_target(target)
 	score_display.reset_round()
 
@@ -486,10 +516,12 @@ func _on_go_to_shop() -> void:
 	var owned_ids: Array = []
 	for j in joker_slot.get_owned_jokers():
 		owned_ids.append(j.id)
-	shop.open_shop(GS.money, owned_ids, joker_slot, consumable_slot)
+	shop.open_shop(GS.money, owned_ids, joker_slot, consumable_slot, owned_voucher_ids)
 
 func _on_shop_closed() -> void:
 	GS.money = shop.get_money()
+	## 同步 voucher 购买
+	owned_voucher_ids = shop.get_owned_voucher_ids()
 	boss_effect_label.text = ""
 	_advance_blind()
 
@@ -511,6 +543,10 @@ func _on_celebration_done() -> void:
 func _return_to_title() -> void:
 	GS.reset()
 	HandLevel.reset()
+	owned_voucher_ids.clear()
+	## 重置动态上限
+	joker_slot.MAX_JOKERS = 5
+	consumable_slot.MAX_CONSUMABLES = 2
 
 	while joker_slot.get_owned_jokers().size() > 0:
 		joker_slot.remove_joker(0)
@@ -540,11 +576,13 @@ func _restart_game() -> void:
 	_return_to_title_state()
 	info_label.text = ""
 	info_label.add_theme_color_override("font_color", GC.COLOR_INFO)
-	_open_blind_select()
 
 func _return_to_title_state() -> void:
 	GS.reset()
 	HandLevel.reset()
+	owned_voucher_ids.clear()
+	joker_slot.MAX_JOKERS = 5
+	consumable_slot.MAX_CONSUMABLES = 2
 	while joker_slot.get_owned_jokers().size() > 0:
 		joker_slot.remove_joker(0)
 	consumable_slot.clear_all()
@@ -572,6 +610,36 @@ func _on_planet_used(planet: PlanetData) -> void:
 
 func _on_tarot_used(tarot: TarotData) -> void:
 	var selected = hand.get_selected_cards()
+	## 处理增强塔罗牌（直接在 main 中处理，因为需要修改 card_data）
+	if tarot.effect == TarotData.TarotEffect.ADD_FOIL:
+		if selected.size() >= 1:
+			selected[0].card_data.enhancement = CardData.Enhancement.FOIL
+			selected[0].is_selected = false
+			selected[0].queue_redraw()
+			info_label.text = "✨ " + Loc.i().t("Foil") + "! " + selected[0].card_data.get_display_name() + " +50 " + Loc.i().t("Chips")
+			info_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
+		_update_preview()
+		return
+	if tarot.effect == TarotData.TarotEffect.ADD_HOLOGRAPHIC:
+		if selected.size() >= 1:
+			selected[0].card_data.enhancement = CardData.Enhancement.HOLOGRAPHIC
+			selected[0].is_selected = false
+			selected[0].queue_redraw()
+			info_label.text = "🌈 " + Loc.i().t("Holographic") + "! " + selected[0].card_data.get_display_name() + " +10 " + Loc.i().t("Mult")
+			info_label.add_theme_color_override("font_color", Color(0.8, 0.5, 1.0))
+		_update_preview()
+		return
+	if tarot.effect == TarotData.TarotEffect.ADD_POLYCHROME:
+		if selected.size() >= 1:
+			selected[0].card_data.enhancement = CardData.Enhancement.POLYCHROME
+			selected[0].is_selected = false
+			selected[0].queue_redraw()
+			info_label.text = "🎨 " + Loc.i().t("Polychrome") + "! " + selected[0].card_data.get_display_name() + " ×1.5 " + Loc.i().t("Mult")
+			info_label.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3))
+		_update_preview()
+		return
+
+	## 其他塔罗效果委托给 TarotEffectProcessor
 	var result = TarotEffectProcessor.apply(tarot, selected, hand, consumable_slot)
 	if result["message"] != "":
 		info_label.text = result["message"]
@@ -665,7 +733,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				info_label.add_theme_color_override("font_color", GC.COLOR_DEBUG)
 				_trigger_victory()
 		KEY_F5:
-			if joker_slot.get_owned_jokers().size() < GC.MAX_JOKER_SLOTS:
+			if joker_slot.get_owned_jokers().size() < joker_slot.MAX_JOKERS:
 				var owned_ids: Array = []
 				for j in joker_slot.get_owned_jokers():
 					owned_ids.append(j.id)

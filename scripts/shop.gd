@@ -1,5 +1,5 @@
 ## shop.gd
-## 商店系统 V10.1 - 文字换行 + 布局修复 + 金钱滚动动画
+## 商店系统 V0.075 - Voucher 系统 + 折扣支持
 extends Node2D
 
 signal shop_closed()
@@ -18,11 +18,13 @@ const OWNED_CARD_W: float = 110.0
 const OWNED_CARD_H: float = 145.0
 const OWNED_SPACING: float = 130.0
 
-const REROLL_COST: int = 5
+const BASE_REROLL_COST: int = 5
 
 var shop_jokers: Array[JokerData] = []
 var shop_consumables: Array = []
+var shop_voucher: VoucherData = null  ## 每个 Ante 一张
 var owned_joker_ids: Array = []
+var owned_voucher_ids: Array = []
 var money: int = 0
 var joker_slot_ref = null
 var consumable_slot_ref = null
@@ -57,9 +59,35 @@ const MONEY_ANIM_DURATION: float = 0.5
 func _ready() -> void:
 	visible = false
 
-func open_shop(current_money: int, current_joker_ids: Array, joker_slot, consumable_slot = null) -> void:
+## ========== Voucher 折扣计算 ==========
+
+func _get_reroll_cost() -> int:
+	var cost = BASE_REROLL_COST
+	for vid in owned_voucher_ids:
+		var v = VoucherDatabase.get_voucher_by_id(vid)
+		if v and v.effect == VoucherData.VoucherEffect.REROLL_DISCOUNT:
+			cost -= int(v.value)
+	return maxi(cost, 0)
+
+func _get_shop_discount() -> float:
+	## 返回折扣比例，如 0.9 表示打9折
+	var discount = 1.0
+	for vid in owned_voucher_ids:
+		var v = VoucherDatabase.get_voucher_by_id(vid)
+		if v and v.effect == VoucherData.VoucherEffect.SHOP_DISCOUNT:
+			discount -= v.value
+	return maxf(discount, 0.5)
+
+func _discounted_price(base_price: int) -> int:
+	return maxi(1, int(base_price * _get_shop_discount()))
+
+func get_owned_voucher_ids() -> Array:
+	return owned_voucher_ids
+
+func open_shop(current_money: int, current_joker_ids: Array, joker_slot, consumable_slot = null, voucher_ids: Array = []) -> void:
 	money = current_money
 	owned_joker_ids = current_joker_ids
+	owned_voucher_ids = voucher_ids.duplicate()
 	joker_slot_ref = joker_slot
 	consumable_slot_ref = consumable_slot
 	visible = true
@@ -81,6 +109,8 @@ func _generate_shop_items() -> void:
 			var tarots = TarotDatabase.get_random_tarots(1)
 			if tarots.size() > 0:
 				shop_consumables.append({"type": "tarot", "data": tarots[0]})
+	## 生成一张未拥有的 Voucher
+	shop_voucher = VoucherDatabase.get_random_voucher(owned_voucher_ids)
 
 func _process(delta: float) -> void:
 	if not visible:
@@ -184,16 +214,18 @@ func _build_ui() -> void:
 
 	_build_shop_jokers(card_layer)
 	_build_shop_consumables(card_layer)
+	_build_shop_voucher(card_layer)
 	_build_owned_jokers(card_layer)
 	_build_held_consumables(card_layer)
 
 	## 按钮
+	var reroll_cost = _get_reroll_cost()
 	var reroll_button = Button.new()
-	reroll_button.text = "   " + Loc.i().t("Reroll") + " ($" + str(REROLL_COST) + ")   "
+	reroll_button.text = "   " + Loc.i().t("Reroll") + " ($" + str(reroll_cost) + ")   "
 	reroll_button.position = Vector2(CENTER_X - 250, 580)
 	reroll_button.add_theme_font_size_override("font_size", 20)
 	reroll_button.pressed.connect(_on_reroll)
-	reroll_button.disabled = money < REROLL_COST
+	reroll_button.disabled = money < reroll_cost
 	_fb(reroll_button)
 	add_child(reroll_button)
 
@@ -224,8 +256,9 @@ func _build_shop_jokers(parent: Node2D) -> void:
 	for i in range(count):
 		var joker = shop_jokers[i]
 		var x = base_x + i * spacing
+		var price = _discounted_price(joker.cost)
 		_build_card(parent, x, JOKER_AREA_Y, joker.emoji, joker.joker_name, joker.description,
-			joker.get_rarity_color(), joker.cost, CARD_W, CARD_H)
+			joker.get_rarity_color(), price, CARD_W, CARD_H)
 		_add_buy_area(x, JOKER_AREA_Y, CARD_W, CARD_H, "joker", i)
 
 ## ========== 消耗品商品 ==========
@@ -245,14 +278,35 @@ func _build_shop_consumables(parent: Node2D) -> void:
 			var p: PlanetData = item["data"]
 			emoji = p.emoji; card_name = p.planet_name
 			desc = "Lv↑ " + PokerHand.get_hand_name(p.hand_type)
-			border_color = p.get_rarity_color(); cost = p.cost
+			border_color = p.get_rarity_color(); cost = _discounted_price(p.cost)
 		else:
 			var t: TarotData = item["data"]
 			emoji = t.emoji; card_name = t.tarot_name
 			desc = t.description
-			border_color = t.get_rarity_color(); cost = t.cost
+			border_color = t.get_rarity_color(); cost = _discounted_price(t.cost)
 		_build_card(parent, x, PLANET_AREA_Y, emoji, card_name, desc, border_color, cost, CARD_W, CARD_H)
 		_add_buy_area(x, PLANET_AREA_Y, CARD_W, CARD_H, "consumable", i)
+
+## ========== Voucher 商品 ==========
+
+func _build_shop_voucher(parent: Node2D) -> void:
+	if shop_voucher == null: return
+	## Voucher 显示在商品区右侧
+	var voucher_x = CENTER_X
+	var voucher_y = 580.0
+	var voucher_title = Label.new()
+	voucher_title.text = "🎟️ " + Loc.i().t("VOUCHER")
+	voucher_title.position = Vector2(voucher_x - 75, voucher_y - 115)
+	voucher_title.custom_minimum_size = Vector2(150, 0)
+	voucher_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	voucher_title.add_theme_font_size_override("font_size", 12)
+	voucher_title.add_theme_color_override("font_color", Color(0.95, 0.75, 0.2))
+	_f(voucher_title)
+	parent.add_child(voucher_title)
+	var v = shop_voucher
+	_build_card(parent, voucher_x, voucher_y, v.emoji, v.voucher_name, v.description,
+		Color(0.95, 0.75, 0.2), v.cost, 130.0, 170.0)
+	_add_buy_area(voucher_x, voucher_y, 130.0, 170.0, "voucher", 0)
 
 ## ========== 已持有小丑牌 ==========
 
@@ -297,7 +351,7 @@ func _build_held_consumables(parent: Node2D) -> void:
 	var hint_text = ""
 	if held.size() > 0:
 		hint_text = "  (" + Loc.i().t("Left: Use") + " | " + Loc.i().t("Right: Sell") + ")"
-	section_title.text = Loc.i().t("YOUR CONSUMABLES") + " (" + str(held.size()) + "/2)" + hint_text
+	section_title.text = Loc.i().t("YOUR CONSUMABLES") + " (" + str(held.size()) + "/" + str(consumable_slot_ref.MAX_CONSUMABLES) + ")" + hint_text
 	section_title.position = Vector2(CENTER_X, OWNED_Y - 100)
 	section_title.custom_minimum_size = Vector2(CENTER_X, 0)
 	section_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -507,17 +561,22 @@ func _on_buy_hover(item_type: String, index: int) -> void:
 	var _t = Loc.i()
 	if item_type == "joker" and index < shop_jokers.size():
 		var j = shop_jokers[index]
-		shop_info_label.text = _t.t(j.joker_name) + " - " + _t.t(j.description) + "  |  $" + str(j.cost) + "  [" + _t.t(j.get_rarity_name()) + "]"
+		var price = _discounted_price(j.cost)
+		shop_info_label.text = _t.t(j.joker_name) + " - " + _t.t(j.description) + "  |  $" + str(price) + "  [" + _t.t(j.get_rarity_name()) + "]"
 	elif item_type == "consumable" and index < shop_consumables.size():
 		var item = shop_consumables[index]
 		if item["type"] == "planet":
 			var p: PlanetData = item["data"]
 			var hand_name = PokerHand.get_hand_name(p.hand_type)
 			var info = HandLevel.get_level_info(p.hand_type)
-			shop_info_label.text = _t.t(p.planet_name) + " - " + _t.t("Upgrades " + hand_name) + " (Lv." + str(info["level"]) + "→" + str(info["level"]+1) + ")  |  $" + str(p.cost)
+			var price = _discounted_price(p.cost)
+			shop_info_label.text = _t.t(p.planet_name) + " - " + _t.t("Upgrades " + hand_name) + " (Lv." + str(info["level"]) + "→" + str(info["level"]+1) + ")  |  $" + str(price)
 		else:
 			var t: TarotData = item["data"]
-			shop_info_label.text = _t.t(t.tarot_name) + " - " + _t.t(t.description) + "  |  $" + str(t.cost) + "  [" + _t.t("Tarot Cards") + "]"
+			var price = _discounted_price(t.cost)
+			shop_info_label.text = _t.t(t.tarot_name) + " - " + _t.t(t.description) + "  |  $" + str(price) + "  [" + _t.t("Tarot Cards") + "]"
+	elif item_type == "voucher" and shop_voucher != null:
+		shop_info_label.text = "🎟️ " + _t.t(shop_voucher.voucher_name) + " - " + _t.t(shop_voucher.description) + "  |  $" + str(shop_voucher.cost) + "  [" + _t.t("Voucher") + "]"
 	shop_info_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.65))
 
 func _on_sell_hover(item_type: String, index: int) -> void:
@@ -540,6 +599,8 @@ func _on_buy_click(item_type: String, index: int, event: InputEvent) -> void:
 			_buy_joker(index)
 		elif item_type == "consumable":
 			_buy_consumable(index)
+		elif item_type == "voucher":
+			_buy_voucher()
 
 func _on_sell_click(item_type: String, index: int, event: InputEvent) -> void:
 	if is_animating: return
@@ -552,11 +613,13 @@ func _on_sell_click(item_type: String, index: int, event: InputEvent) -> void:
 func _buy_joker(index: int) -> void:
 	if index >= shop_jokers.size(): return
 	var joker = shop_jokers[index]
-	if money < joker.cost:
+	var price = _discounted_price(joker.cost)
+	if money < price:
 		shop_info_label.text = Loc.i().t("Not enough money!")
 		shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
 		return
-	if joker_slot_ref and joker_slot_ref.get_owned_jokers().size() >= 5:
+	var max_jokers = joker_slot_ref.MAX_JOKERS if joker_slot_ref else 5
+	if joker_slot_ref and joker_slot_ref.get_owned_jokers().size() >= max_jokers:
 		shop_info_label.text = Loc.i().t("Joker slots full!")
 		shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
 		return
@@ -569,7 +632,7 @@ func _buy_joker(index: int) -> void:
 	_spawn_shatter_particles(cx, JOKER_AREA_Y, Color(0.3, 0.9, 0.4), 15)
 
 	var old_money = money
-	money -= joker.cost
+	money -= price
 	_start_money_anim(old_money, money)
 
 	if joker_slot_ref:
@@ -587,15 +650,16 @@ func _buy_joker(index: int) -> void:
 func _buy_consumable(index: int) -> void:
 	if index >= shop_consumables.size(): return
 	var item = shop_consumables[index]
-	var cost: int; var item_name: String
+	var base_cost: int; var item_name: String
 	if item["type"] == "planet":
-		cost = (item["data"] as PlanetData).cost
+		base_cost = (item["data"] as PlanetData).cost
 		item_name = (item["data"] as PlanetData).planet_name
 	else:
-		cost = (item["data"] as TarotData).cost
+		base_cost = (item["data"] as TarotData).cost
 		item_name = (item["data"] as TarotData).tarot_name
+	var price = _discounted_price(base_cost)
 
-	if money < cost:
+	if money < price:
 		shop_info_label.text = Loc.i().t("Not enough money!")
 		shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
 		return
@@ -613,7 +677,7 @@ func _buy_consumable(index: int) -> void:
 	_spawn_glow_particles(cx, PLANET_AREA_Y, pc, 18)
 
 	var old_money = money
-	money -= cost
+	money -= price
 	_start_money_anim(old_money, money)
 
 	if consumable_slot_ref:
@@ -627,6 +691,30 @@ func _buy_consumable(index: int) -> void:
 	shop_info_label.text = Loc.i().t("Purchased") + " " + Loc.i().t(item_name) + "!"
 	var tc = Color(0.2, 0.6, 0.95) if item["type"] == "planet" else Color(0.7, 0.35, 0.75)
 	shop_info_label.add_theme_color_override("font_color", tc)
+	await get_tree().create_timer(0.4).timeout
+	_build_ui()
+	is_animating = false
+
+func _buy_voucher() -> void:
+	if shop_voucher == null: return
+	if money < shop_voucher.cost:
+		shop_info_label.text = Loc.i().t("Not enough money!")
+		shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
+		return
+
+	_spawn_glow_particles(CENTER_X, 580.0, Color(0.95, 0.75, 0.2), 25)
+
+	var old_money = money
+	money -= shop_voucher.cost
+	_start_money_anim(old_money, money)
+
+	owned_voucher_ids.append(shop_voucher.id)
+	var vname = shop_voucher.voucher_name
+	shop_voucher = null  ## 每个 Ante 只能买一张
+
+	is_animating = true
+	shop_info_label.text = "🎟️ " + Loc.i().t("Purchased") + " " + Loc.i().t(vname) + "!"
+	shop_info_label.add_theme_color_override("font_color", Color(0.95, 0.75, 0.2))
 	await get_tree().create_timer(0.4).timeout
 	_build_ui()
 	is_animating = false
@@ -663,12 +751,13 @@ func _sell_joker(index: int) -> void:
 
 func _on_reroll() -> void:
 	if is_animating: return
-	if money < REROLL_COST:
+	var reroll_cost = _get_reroll_cost()
+	if money < reroll_cost:
 		shop_info_label.text = Loc.i().t("Not enough money to reroll!")
 		shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
 		return
 	var old_money = money
-	money -= REROLL_COST
+	money -= reroll_cost
 	_start_money_anim(old_money, money)
 	_generate_shop_items()
 	await get_tree().create_timer(0.3).timeout

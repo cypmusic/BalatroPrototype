@@ -1,5 +1,5 @@
 ## tarot_database.gd
-## 塔罗牌数据库 - 12 张塔罗牌
+## 塔罗牌数据库 V2 - 15 张塔罗牌（含增强塔罗）
 class_name TarotDatabase
 extends RefCounted
 
@@ -161,6 +161,45 @@ static func get_all_tarots() -> Array[TarotData]:
 	t12.min_select = 0
 	t12.max_select = 0
 	tarots.append(t12)
+
+	## 13. The Emperor - 添加箔片增强
+	var t13 = TarotData.new()
+	t13.id = "emperor"
+	t13.tarot_name = "The Emperor"
+	t13.description = "Add Foil to 1 card (+50 Chips)"
+	t13.emoji = "👑"
+	t13.effect = TarotData.TarotEffect.ADD_FOIL
+	t13.cost = 4
+	t13.needs_selection = true
+	t13.min_select = 1
+	t13.max_select = 1
+	tarots.append(t13)
+
+	## 14. The Empress - 添加全息增强
+	var t14 = TarotData.new()
+	t14.id = "empress"
+	t14.tarot_name = "The Empress"
+	t14.description = "Add Holo to 1 card (+10 Mult)"
+	t14.emoji = "👸"
+	t14.effect = TarotData.TarotEffect.ADD_HOLOGRAPHIC
+	t14.cost = 4
+	t14.needs_selection = true
+	t14.min_select = 1
+	t14.max_select = 1
+	tarots.append(t14)
+
+	## 15. The High Priestess - 添加多彩增强
+	var t15 = TarotData.new()
+	t15.id = "high_priestess"
+	t15.tarot_name = "The High Priestess"
+	t15.description = "Add Polychrome to 1 card (×1.5 Mult)"
+	t15.emoji = "🌙"
+	t15.effect = TarotData.TarotEffect.ADD_POLYCHROME
+	t15.cost = 5
+	t15.needs_selection = true
+	t15.min_select = 1
+	t15.max_select = 1
+	tarots.append(t15)
 
 	return tarots
 

@@ -1,5 +1,5 @@
 ## consumable_slot.gd
-## 消耗品栏位 V2.1 - 星球牌 + 塔罗牌 + 中文本地化
+## 消耗品栏位 V0.075 - 支持动态栏位上限（Voucher 扩展）
 extends Node2D
 
 signal planet_used(planet: PlanetData)
@@ -7,7 +7,7 @@ signal tarot_used(tarot: TarotData)
 signal consumable_hovered(text: String)
 signal consumable_unhovered()
 
-const MAX_CONSUMABLES: int = 2
+var MAX_CONSUMABLES: int = 2  ## 改为 var 以支持 Voucher 动态扩展
 const SLOT_W: float = 90.0
 const SLOT_H: float = 120.0
 const SLOT_SPACING: float = 110.0

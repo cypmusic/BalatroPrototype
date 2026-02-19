@@ -1,5 +1,5 @@
 ## poker_hand.gd
-## 扑克牌型判定与计分系统 V5 - 集成牌型升级
+## 扑克牌型判定与计分系统 V6 - 集成卡牌增强计分
 class_name PokerHand
 extends RefCounted
 
@@ -95,7 +95,7 @@ static func evaluate(cards: Array) -> Dictionary:
 			highest = card
 	return {"type": HandType.HIGH_CARD, "scoring_cards": [highest]}
 
-## 计算最终得分（集成牌型升级加成）
+## 计算最终得分（集成牌型升级 + 卡牌增强加成）
 static func calculate_score(cards: Array) -> Dictionary:
 	var eval_result = evaluate(cards)
 	var hand_type: HandType = eval_result["type"]
@@ -106,12 +106,25 @@ static func calculate_score(cards: Array) -> Dictionary:
 	var level_bonus = HandLevel.get_bonus(hand_type)
 	var level_info = HandLevel.get_level_info(hand_type)
 
+	## 计算卡牌筹码 + 增强加成
 	var card_chips: int = 0
+	var enhancement_mult_add: int = 0
+	var enhancement_mult_multiply: float = 1.0
 	for card in scoring_cards:
 		card_chips += card.card_data.get_chip_value()
+		card_chips += card.card_data.get_enhancement_chips()
+		enhancement_mult_add += card.card_data.get_enhancement_mult()
+		enhancement_mult_multiply *= card.card_data.get_enhancement_mult_multiplier()
 
 	var total_chips: int = base["chips"] + level_bonus["chips"] + card_chips
-	var total_mult: int = base["mult"] + level_bonus["mult"]
+	var total_mult: int = base["mult"] + level_bonus["mult"] + enhancement_mult_add
+
+	## 应用多彩乘数
+	var total_mult_f: float = float(total_mult) * enhancement_mult_multiply
+	total_mult = int(total_mult_f)
+	if total_mult < 1:
+		total_mult = 1
+
 	var final_score: int = total_chips * total_mult
 
 	return {

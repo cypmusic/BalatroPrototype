@@ -8,7 +8,7 @@ signal joker_unhovered()
 const SLOT_WIDTH: float = 130.0
 const SLOT_HEIGHT: float = 170.0
 const SLOT_SPACING: float = 145.0
-const MAX_JOKERS: int = 5
+var MAX_JOKERS: int = 5
 
 var owned_jokers: Array[JokerData] = []
 var joker_visuals: Array[Node2D] = []

@@ -1,5 +1,5 @@
 ## tarot_data.gd
-## 塔罗牌数据定义
+## 塔罗牌数据定义 V2 - 新增卡牌增强效果
 class_name TarotData
 extends Resource
 
@@ -16,6 +16,9 @@ enum TarotEffect {
 	SPAWN_TAROT,        ## 获得2张随机塔罗牌
 	SPAWN_PLANET,       ## 获得2张随机星球牌
 	RANDOM_LEVEL_UP,    ## 随机升级一种牌型2级
+	ADD_FOIL,           ## 添加箔片增强
+	ADD_HOLOGRAPHIC,    ## 添加全息增强
+	ADD_POLYCHROME,     ## 添加多彩增强
 }
 
 @export var id: String = ""

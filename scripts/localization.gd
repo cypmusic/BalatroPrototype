@@ -197,6 +197,41 @@ var translations: Dictionary = {
 	"+8 Mult if hand is Pair": {"中文": "打出对子时 +8倍率"},
 	"+12 Mult if Three of a Kind": {"中文": "打出三条时 +12倍率"},
 	"×2 Mult if hand contains a Pair": {"中文": "牌型含对子时 ×2倍率"},
+	## ----- 卡牌增强 -----
+"Foil": {"中文": "箔片"},
+"Holographic": {"中文": "全息"},
+"Polychrome": {"中文": "多彩"},
+"Enhancement": {"中文": "增强"},
+
+
+## ----- 增强塔罗牌描述 -----
+"Add Foil to 1 card (+50 Chips)": {"中文": "为1张牌添加箔片(+50筹码)"},
+"Add Holographic to 1 card (+10 Mult)": {"中文": "为1张牌添加全息(+10倍率)"},
+"Add Polychrome to 1 card (×1.5 Mult)": {"中文": "为1张牌添加多彩(×1.5倍率)"},
+
+## ----- Voucher 系统 -----
+"VOUCHER": {"中文": "优惠券"},
+"Voucher": {"中文": "优惠券"},
+
+## ----- Voucher 名称 -----
+"Overstock": {"中文": "库存过剩"},
+"Clearance Sale": {"中文": "清仓大甩卖"},
+"Hone": {"中文": "磨砺"},
+"Reroll Surplus": {"中文": "刷新盈余"},
+"Crystal Ball": {"中文": "水晶球"},
+"Telescope": {"中文": "望远镜"},
+"Grabber": {"中文": "抓取者"},
+"Wasteful": {"中文": "挥霍者"},
+
+## ----- Voucher 描述 -----
+"+1 Joker slot": {"中文": "+1小丑栏位"},
+"10% discount on shop items": {"中文": "商店物品打9折"},
+"+1 Hand per round": {"中文": "每回合+1手牌"},
+"-$2 Reroll cost": {"中文": "刷新费用-$2"},
+"+1 Consumable slot": {"中文": "+1消耗品栏位"},
+"Interest cap raised to $10": {"中文": "利息上限提升至$10"},
+"+1 Hand per round (stacks)": {"中文": "每回合+1手牌(可叠加)"},
+"+1 Discard per round": {"中文": "每回合+1弃牌"},
 	"+50 Chips": {"中文": "+50 筹码"},
 	"+30 Chips per discard remaining": {"中文": "每剩余1次弃牌 +30筹码"},
 	"+15 Mult when 0 discards remaining": {"中文": "剩余弃牌为0时 +15倍率"},
