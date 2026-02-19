@@ -178,8 +178,9 @@ func _draw_hand_levels(font: Font, start_x: float, start_y: float) -> void:
 		var hand_name = Loc.i().t(PokerHand.get_hand_name(ht))
 		var info = HandLevel.get_level_info(ht)
 		var level = info["level"]
-		var chips = info["base_chips"]
-		var mult = info["base_mult"]
+		var base = PokerHand.get_base_score(ht)
+		var chips = base["chips"] + info["bonus_chips"]
+		var mult = base["mult"] + info["bonus_mult"]
 
 		## 行背景交替
 		if i % 2 == 0:
