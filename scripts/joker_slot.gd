@@ -1,5 +1,5 @@
 ## joker_slot.gd
-## 小丑牌槽位 UI - 屏幕上方显示持有的小丑牌
+## 小丑牌槽位 UI V3 - 改用 Label 节点解决中文+Emoji 渲染
 extends Node2D
 
 signal joker_hovered(joker_data: JokerData)
@@ -12,6 +12,7 @@ const MAX_JOKERS: int = 5
 
 var owned_jokers: Array[JokerData] = []
 var joker_visuals: Array[Node2D] = []
+var card_labels: Array[Node] = []  ## Label 节点缓存
 
 ## 触发动画
 var trigger_timers: Dictionary = {}  ## joker_index -> timer
@@ -20,7 +21,6 @@ func _ready() -> void:
 	pass
 
 func _process(delta: float) -> void:
-	## 更新触发动画
 	var to_remove: Array = []
 	for idx in trigger_timers:
 		trigger_timers[idx] += delta
@@ -47,7 +47,6 @@ func remove_joker(index: int) -> void:
 func get_owned_jokers() -> Array[JokerData]:
 	return owned_jokers
 
-## 触发某个小丑牌的动画
 func trigger_joker_animation(joker_data: JokerData) -> void:
 	var idx = owned_jokers.find(joker_data)
 	if idx >= 0:
@@ -61,7 +60,13 @@ func _rebuild_visuals() -> void:
 			visual.queue_free()
 	joker_visuals.clear()
 
-	## 为每张小丑牌创建交互区域
+	## 清除旧的 Label 节点
+	for lbl in card_labels:
+		if is_instance_valid(lbl):
+			lbl.queue_free()
+	card_labels.clear()
+
+	## 为每张小丑牌创建交互区域 + Label
 	for i in range(owned_jokers.size()):
 		var area = Area2D.new()
 		var collision = CollisionShape2D.new()
@@ -74,7 +79,6 @@ func _rebuild_visuals() -> void:
 		area.add_child(collision)
 		area.input_pickable = true
 
-		## 捕获 i 的值
 		var joker_index = i
 		area.mouse_entered.connect(func(): _on_joker_hover(joker_index))
 		area.mouse_exited.connect(func(): _on_joker_unhover())
@@ -82,7 +86,55 @@ func _rebuild_visuals() -> void:
 		add_child(area)
 		joker_visuals.append(area)
 
+		## 创建 Label 节点（自动使用全局 Theme 字体，支持 emoji 回退）
+		_create_card_labels(x_pos, owned_jokers[i])
+
 	queue_redraw()
+
+func _create_card_labels(x: float, joker: JokerData) -> void:
+	var loc = Loc.i()
+
+	## Emoji 图标
+	var emoji_lbl = Label.new()
+	emoji_lbl.text = joker.emoji
+	emoji_lbl.position = Vector2(x - SLOT_WIDTH / 2, -SLOT_HEIGHT / 2 + 10)
+	emoji_lbl.custom_minimum_size = Vector2(SLOT_WIDTH, 50)
+	emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	emoji_lbl.add_theme_font_size_override("font_size", 36)
+	emoji_lbl.add_theme_color_override("font_color", Color.WHITE)
+	emoji_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(emoji_lbl)
+	card_labels.append(emoji_lbl)
+
+	## 名称
+	var name_lbl = Label.new()
+	name_lbl.text = loc.t(joker.joker_name)
+	name_lbl.position = Vector2(x - SLOT_WIDTH / 2 + 3, SLOT_HEIGHT / 2 - 42)
+	name_lbl.custom_minimum_size = Vector2(SLOT_WIDTH - 6, 0)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 12)
+	name_lbl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.8))
+	name_lbl.clip_text = true
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if loc.cn_font:
+		name_lbl.add_theme_font_override("font", loc.cn_font)
+	add_child(name_lbl)
+	card_labels.append(name_lbl)
+
+	## 效果描述
+	var desc_lbl = Label.new()
+	desc_lbl.text = loc.t(joker.description)
+	desc_lbl.position = Vector2(x - SLOT_WIDTH / 2 + 3, SLOT_HEIGHT / 2 - 22)
+	desc_lbl.custom_minimum_size = Vector2(SLOT_WIDTH - 6, 0)
+	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_lbl.add_theme_font_size_override("font_size", 10)
+	desc_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.55))
+	desc_lbl.clip_text = true
+	desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if loc.cn_font:
+		desc_lbl.add_theme_font_override("font", loc.cn_font)
+	add_child(desc_lbl)
+	card_labels.append(desc_lbl)
 
 func _get_joker_x(index: int) -> float:
 	var count = owned_jokers.size()
@@ -90,25 +142,23 @@ func _get_joker_x(index: int) -> float:
 	return -total_width / 2.0 + index * SLOT_SPACING
 
 func _draw() -> void:
-	var count = owned_jokers.size()
-
 	## 画空槽位
 	for i in range(MAX_JOKERS):
 		var x = _get_slot_x(i)
 		var rect = Rect2(x - SLOT_WIDTH / 2, -SLOT_HEIGHT / 2, SLOT_WIDTH, SLOT_HEIGHT)
 		draw_rect(rect, Color(0.15, 0.2, 0.18, 0.4), false, 1.5)
 
-	## 画拥有的小丑牌
-	for i in range(count):
+	## 画拥有的小丑牌卡片背景/边框/发光（文字由 Label 节点负责）
+	for i in range(owned_jokers.size()):
 		var joker = owned_jokers[i]
 		var x = _get_joker_x(i)
-		_draw_joker_card(x, joker, i)
+		_draw_joker_card_bg(x, joker, i)
 
 func _get_slot_x(index: int) -> float:
 	var total_width = (MAX_JOKERS - 1) * SLOT_SPACING
 	return -total_width / 2.0 + index * SLOT_SPACING
 
-func _draw_joker_card(x: float, joker: JokerData, index: int) -> void:
+func _draw_joker_card_bg(x: float, joker: JokerData, index: int) -> void:
 	var rect = Rect2(x - SLOT_WIDTH / 2, -SLOT_HEIGHT / 2, SLOT_WIDTH, SLOT_HEIGHT)
 
 	## 触发时的发光效果
@@ -131,22 +181,6 @@ func _draw_joker_card(x: float, joker: JokerData, index: int) -> void:
 	## 稀有度边框
 	var rarity_color = joker.get_rarity_color()
 	draw_rect(rect, rarity_color, false, 2.5)
-
-	## Emoji 图标
-	draw_string(ThemeDB.fallback_font,
-		Vector2(x - 18, -15),
-		joker.emoji, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, Color.WHITE)
-
-	## 名字（居中）
-	var font = Loc.i().cn_font if Loc.i().cn_font else ThemeDB.fallback_font
-	draw_string(font,
-		Vector2(x - SLOT_WIDTH / 2 + 5, SLOT_HEIGHT / 2 - 30),
-		Loc.i().t(joker.joker_name), HORIZONTAL_ALIGNMENT_CENTER, SLOT_WIDTH - 10, 13, Color(0.85, 0.85, 0.8))
-
-	## 效果描述（居中）
-	draw_string(font,
-		Vector2(x - SLOT_WIDTH / 2 + 5, SLOT_HEIGHT / 2 - 10),
-		Loc.i().t(joker.description), HORIZONTAL_ALIGNMENT_CENTER, SLOT_WIDTH - 10, 11, Color(0.6, 0.6, 0.55))
 
 func _on_joker_hover(index: int) -> void:
 	if index < owned_jokers.size():

@@ -730,6 +730,7 @@ func _use_consumable_in_shop(index: int) -> void:
 		var result = HandLevel.planet_level_up(planet.hand_type, planet.level_chips, planet.level_mult)
 		var hand_name = PokerHand.get_hand_name(planet.hand_type)
 		held.remove_at(index)
+		consumable_slot_ref._rebuild()
 		shop_info_label.text = "✨ " + _l.t(planet.planet_name) + "! " + _l.t(hand_name) + " → Lv." + str(result["new_level"])
 		shop_info_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.5))
 		_spawn_glow_particles(CENTER_X + CENTER_X / 2.0, OWNED_Y, Color(0.3, 0.5, 0.9))
@@ -753,6 +754,7 @@ func _sell_consumable_in_shop(index: int) -> void:
 	else:
 		item_name = item["data"].tarot_name
 	held.remove_at(index)
+	consumable_slot_ref._rebuild()
 	money += sell_price
 	_update_money_display()
 	shop_info_label.text = _l.t("Sold") + " " + _l.t(item_name) + " +$" + str(sell_price)

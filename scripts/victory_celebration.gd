@@ -1,5 +1,5 @@
 ## victory_celebration.gd
-## 通关庆祝动画 - Congratulations 缩放 + 彩带金币掉落
+## 通关庆祝动画 V2 - 中文字体修复 + Congratulations 缩放 + 彩带金币掉落
 extends Node2D
 
 signal celebration_done()
@@ -23,6 +23,12 @@ const CONFETTI_COLORS = [
 	Color(0.3, 0.9, 0.4), Color(0.8, 0.3, 0.9), Color(0.95, 0.5, 0.15),
 	Color(0.2, 0.9, 0.85), Color(0.95, 0.4, 0.6),
 ]
+
+## 字体辅助
+func _f(lbl: Label) -> void:
+	var font = Loc.i().cn_font
+	if font:
+		lbl.add_theme_font_override("font", font)
 
 func _ready() -> void:
 	visible = false
@@ -87,6 +93,9 @@ func _build_ui() -> void:
 	title_label.modulate.a = 0.0
 	title_label.scale = Vector2(0.01, 0.01)
 	title_label.pivot_offset = Vector2(SCREEN_W / 2, 40)
+	_f(title_label)
+	if Loc.i().current_language == "中文":
+		title_label.position.x = 30
 	add_child(title_label)
 
 	## 副标题
@@ -99,6 +108,9 @@ func _build_ui() -> void:
 	sub_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.85))
 	sub_label.z_index = 2
 	sub_label.modulate.a = 0.0
+	_f(sub_label)
+	if Loc.i().current_language == "中文":
+		sub_label.position.x = 10
 	add_child(sub_label)
 
 	## 点击继续提示
@@ -111,6 +123,7 @@ func _build_ui() -> void:
 	click_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.55))
 	click_label.z_index = 2
 	click_label.modulate.a = 0.0
+	_f(click_label)
 	add_child(click_label)
 
 func _process(delta: float) -> void:

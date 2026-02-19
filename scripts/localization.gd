@@ -179,6 +179,14 @@ var translations: Dictionary = {
 	"Jolly Joker": {"中文": "欢乐小丑"},
 	"Zany Joker": {"中文": "疯狂小丑"},
 	"The Duo": {"中文": "双人组"},
+	"Sly Joker": {"中文": "狡猾小丑"},
+	"Banner": {"中文": "旗帜"},
+	"Mystic Summit": {"中文": "神秘峰顶"},
+	"Fibonacci": {"中文": "斐波那契"},
+	"Scary Face": {"中文": "骇人面孔"},
+	"Even Steven": {"中文": "偶数史蒂文"},
+	"Odd Todd": {"中文": "奇数托德"},
+	"The Trio": {"中文": "三人组"},
 
 	## ===== 小丑牌描述 =====
 	"+4 Mult": {"中文": "+4 倍率"},
@@ -189,6 +197,14 @@ var translations: Dictionary = {
 	"+8 Mult if hand is Pair": {"中文": "打出对子时 +8倍率"},
 	"+12 Mult if Three of a Kind": {"中文": "打出三条时 +12倍率"},
 	"×2 Mult if hand contains a Pair": {"中文": "牌型含对子时 ×2倍率"},
+	"+50 Chips": {"中文": "+50 筹码"},
+	"+30 Chips per discard remaining": {"中文": "每剩余1次弃牌 +30筹码"},
+	"+15 Mult when 0 discards remaining": {"中文": "剩余弃牌为0时 +15倍率"},
+	"+8 Mult for each A,2,3,5,8 scored": {"中文": "每张计分A/2/3/5/8 +8倍率"},
+	"+30 Chips for each face card scored": {"中文": "每张计分人头牌 +30筹码"},
+	"+4 Mult for each even card scored": {"中文": "每张计分偶数牌 +4倍率"},
+	"+30 Chips for each odd card scored": {"中文": "每张计分奇数牌 +30筹码"},
+	"×3 Mult if hand contains Three of a Kind": {"中文": "牌型含三条时 ×3倍率"},
 
 	## ===== 塔罗牌名称 =====
 	"The Fool": {"中文": "愚者"},

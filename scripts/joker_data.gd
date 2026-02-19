@@ -1,13 +1,14 @@
 ## joker_data.gd
-## 小丑牌数据定义 V8.3 - 修正稀有度颜色
+## 小丑牌数据定义 V9 - 新增条件类型支持 16 张小丑牌
 class_name JokerData
 extends Resource
 
 enum TriggerType {
-	ON_SCORE,
-	ON_CARD_SCORED,
-	ON_HAND_PLAYED,
-	PASSIVE,
+	ON_SCORE,           ## 无条件，每次计分触发
+	ON_CARD_SCORED,     ## 每张计分牌检查
+	ON_HAND_PLAYED,     ## 根据牌型触发
+	PASSIVE,            ## 被动效果
+	ON_SCORE_CONTEXT,   ## 需要游戏上下文（如剩余弃牌数）
 }
 
 enum EffectType {
@@ -17,6 +18,8 @@ enum EffectType {
 	ADD_MULT_IF,
 	ADD_CHIPS_IF,
 	MULTIPLY_MULT_IF,
+	ADD_CHIPS_PER,      ## 每满足条件1次 +N chips（如每剩余1次弃牌 +30）
+	ADD_MULT_PER,       ## 每满足条件1次 +N mult
 }
 
 enum ConditionType {
@@ -26,6 +29,11 @@ enum ConditionType {
 	HAND_TYPE,
 	CARD_SUIT,
 	HAND_SIZE,
+	CARD_RANK_LIST,     ## 卡牌点数在指定列表中（用 condition_values 数组）
+	CARD_IS_FACE,       ## 卡牌是人头牌 (J=11, Q=12, K=13)
+	CARD_RANK_EVEN,     ## 卡牌点数为偶数 (2,4,6,8,10)
+	CARD_RANK_ODD,      ## 卡牌点数为奇数 (A,3,5,7,9)
+	DISCARDS_REMAINING, ## 剩余弃牌次数相关
 }
 
 @export var id: String = ""
@@ -39,6 +47,9 @@ enum ConditionType {
 @export var condition: ConditionType = ConditionType.NONE
 @export var value: float = 0.0
 @export var condition_value: int = 0
+
+## 扩展条件值（用于 CARD_RANK_LIST 等需要多值的条件）
+var condition_values: Array = []
 
 @export var emoji: String = "🃏"
 

@@ -165,6 +165,8 @@ func _on_vortex_midpoint() -> void:
 	if ts:
 		ts.queue_free()
 	_restart_game()
+	info_label.text = ""
+	info_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.65))
 
 func _on_vortex_complete() -> void:
 	_open_blind_select()
@@ -631,6 +633,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F1:
 			GS.money += 100
 			_update_ui()
+			if shop.visible:
+				shop.money = GS.money
+				shop._build_ui()
 			info_label.text = "🔧 DEBUG: +$100"
 			info_label.add_theme_color_override("font_color", GC.COLOR_DEBUG)
 		KEY_F2:
