@@ -1,6 +1,6 @@
 ## main.gd
-## 游戏主场景 V0.071 — 架构重构: 场景树化 + 状态单例
-## 变更: @onready 引用替代手动节点创建, GameState 管理状态, GameConfig 管理常量
+## 游戏主场景 V0.072b — TarotEffect/BossEffect 抽取 + 中文字体修复
+## 架构: 场景树化 + 状态单例 + 效果处理器
 extends Node2D
 
 ## ========== 场景树节点引用 ==========
@@ -62,6 +62,17 @@ func _ready() -> void:
 		theme.set_default_font(loc.cn_font)
 		get_tree().root.theme = theme
 
+	## 给 UILayer 预设 Label/Button 应用中文字体
+	if loc.current_language == "中文" and loc.cn_font:
+		for label in [title_label, info_label, money_label, ante_label,
+				blind_label, boss_effect_label, joker_info_label,
+				hands_label, discards_label, draw_pile_label, discard_pile_label]:
+			if label:
+				loc.apply_font_to_label(label)
+		for btn in [play_button, discard_button, sort_button]:
+			if btn:
+				loc.apply_font_to_button(btn)
+
 	## 配置子系统
 	hand.position = Vector2(GC.CENTER_X, 0)
 	hand.draw_pile_source = GC.DRAW_PILE_POS
@@ -88,8 +99,8 @@ func _ready() -> void:
 	consumable_slot.hand_ref = hand
 	pause_menu.joker_slot_ref = joker_slot
 	pause_menu.new_game.connect(_on_new_game_from_menu)
-	if pause_menu.has_signal("continue_game"):
-		pause_menu.continue_game.connect(_on_continue_from_menu)
+	pause_menu.return_to_title.connect(_on_return_to_title_from_menu)
+	pause_menu.language_changed.connect(_on_language_changed)
 	vortex.transition_midpoint.connect(_on_vortex_midpoint)
 	vortex.transition_complete.connect(_on_vortex_complete)
 	play_button.pressed.connect(_on_play_pressed)
@@ -127,19 +138,27 @@ func _on_new_game_from_menu() -> void:
 		pause_menu.visible = false
 	vortex.start_transition()
 
-## 标题菜单点击 Continue → 读档恢复
-func _on_continue_from_menu() -> void:
-	var ts = get_node_or_null("TitleScreen")
-	if ts:
-		ts.visible = false
-		ts.stop_bgm()
-	if pause_menu:
-		pause_menu.visible = false
-	if SaveManager.load_game(self):
-		_update_ui()
-		_open_blind_select()
-	else:
-		vortex.start_transition()
+func _on_return_to_title_from_menu() -> void:
+	## 关闭所有遮罩
+	shop.visible = false
+	blind_select.visible = false
+	round_result.visible = false
+	_return_to_title()
+
+func _on_language_changed() -> void:
+	## 切换语言后刷新所有 UILayer Label/Button 的字体和文本
+	var loc = Loc.i()
+	if loc.current_language == "中文" and loc.cn_font:
+		for label in [title_label, info_label, money_label, ante_label,
+				blind_label, boss_effect_label, joker_info_label,
+				hands_label, discards_label, draw_pile_label, discard_pile_label]:
+			if label:
+				loc.apply_font_to_label(label)
+		for btn in [play_button, discard_button, sort_button]:
+			if btn:
+				loc.apply_font_to_button(btn)
+	## 刷新所有 UI 文本
+	_update_ui()
 
 func _on_vortex_midpoint() -> void:
 	var ts = get_node_or_null("TitleScreen")
@@ -159,8 +178,6 @@ func _on_title_start_game() -> void:
 ## ========== 盲注选择 ==========
 
 func _open_blind_select() -> void:
-	## 自动存档（回合间安全点）
-	SaveManager.save_game(self)
 	if GS.ante_boss == null:
 		GS.ante_boss = BlindData.get_random_boss(GS.used_boss_names)
 		GS.used_boss_names.append(GS.ante_boss.name)
@@ -278,39 +295,10 @@ func _update_preview() -> void:
 	preview["final_score"] = joker_result["final_score"]
 	hand_preview.update_preview(preview)
 
-## ========== Boss 效果 ==========
+## ========== Boss 效果（委托 BossEffectProcessor）==========
 
 func _apply_boss_to_result(result: Dictionary) -> void:
-	if GS.current_boss == null:
-		return
-	match GS.current_boss.effect:
-		BlindData.BossEffect.NO_FACE_CARDS:
-			var new_chips = result["base_chips"] + result.get("level_bonus_chips", 0)
-			for card in result["scoring_cards"]:
-				if card.card_data.rank < 11:
-					new_chips += card.card_data.get_chip_value()
-			result["total_chips"] = new_chips
-			result["final_score"] = new_chips * result["total_mult"]
-		BlindData.BossEffect.NO_HEARTS:
-			_debuff_suit(result, CardData.Suit.HEARTS)
-		BlindData.BossEffect.NO_DIAMONDS:
-			_debuff_suit(result, CardData.Suit.DIAMONDS)
-		BlindData.BossEffect.NO_SPADES:
-			_debuff_suit(result, CardData.Suit.SPADES)
-		BlindData.BossEffect.NO_CLUBS:
-			_debuff_suit(result, CardData.Suit.CLUBS)
-		BlindData.BossEffect.DEBUFF_FIRST_HAND:
-			if GS.hands_played_this_round == 0:
-				result["total_chips"] = int(result["total_chips"] / 2)
-				result["final_score"] = int(result["total_chips"] * result["total_mult"])
-
-func _debuff_suit(result: Dictionary, suit) -> void:
-	var new_chips = result["base_chips"] + result.get("level_bonus_chips", 0)
-	for card in result["scoring_cards"]:
-		if card.card_data.suit != suit:
-			new_chips += card.card_data.get_chip_value()
-	result["total_chips"] = new_chips
-	result["final_score"] = new_chips * result["total_mult"]
+	BossEffectProcessor.apply_to_result(result, GS.current_boss, GS.hands_played_this_round)
 
 ## ========== 出牌 ==========
 
@@ -478,7 +466,6 @@ func _trigger_victory() -> void:
 	round_result.show_victory(score_display.round_score, score_display.target_score, income, blind_name)
 
 func _trigger_defeat() -> void:
-	SaveManager.delete_save()
 	GS.is_round_ended = true
 	play_button.disabled = true
 	discard_button.disabled = true
@@ -510,7 +497,6 @@ func _on_restart_from_result() -> void:
 ## ========== 胜利 ==========
 
 func _show_game_victory() -> void:
-	SaveManager.delete_save()
 	info_label.text = ""
 	if victory_celebration:
 		victory_celebration.start_celebration()
@@ -584,131 +570,17 @@ func _on_planet_used(planet: PlanetData) -> void:
 
 func _on_tarot_used(tarot: TarotData) -> void:
 	var selected = hand.get_selected_cards()
-	match tarot.effect:
-		TarotData.TarotEffect.COPY_CARD:
-			if selected.size() >= 1:
-				var src = selected[0]
-				var new_data = CardData.new()
-				new_data.suit = src.card_data.suit
-				new_data.rank = src.card_data.rank
-				hand.add_card(new_data, true)
-				info_label.text = "🃏 Copied " + src.card_data.get_display_name() + "!"
-				info_label.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-
-		TarotData.TarotEffect.RANDOM_SUIT:
-			if selected.size() >= 1:
-				var card = selected[0]
-				var suits = [CardData.Suit.HEARTS, CardData.Suit.DIAMONDS, CardData.Suit.CLUBS, CardData.Suit.SPADES]
-				var old_suit = card.card_data.suit
-				suits.erase(old_suit)
-				card.card_data.suit = suits[randi() % suits.size()]
-				card.is_selected = false
-				card.queue_redraw()
-				info_label.text = "🎩 Changed to " + card.card_data.get_suit_symbol() + "!"
-				info_label.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-
-		TarotData.TarotEffect.CHANGE_TO_HEARTS:
-			_change_suit(selected, CardData.Suit.HEARTS, "♥")
-
-		TarotData.TarotEffect.CHANGE_TO_SPADES:
-			_change_suit(selected, CardData.Suit.SPADES, "♠")
-
-		TarotData.TarotEffect.CHANGE_TO_CLUBS:
-			_change_suit(selected, CardData.Suit.CLUBS, "♣")
-
-		TarotData.TarotEffect.CHANGE_TO_DIAMONDS:
-			_change_suit(selected, CardData.Suit.DIAMONDS, "♦")
-
-		TarotData.TarotEffect.DESTROY_CARD:
-			if selected.size() >= 1:
-				var card = selected[0]
-				var name_text = card.card_data.get_display_name()
-				hand.cards_in_hand.erase(card)
-				card.queue_free()
-				hand._arrange_cards()
-				hand.hand_changed.emit()
-				info_label.text = "💀 Destroyed " + name_text + "!"
-				info_label.add_theme_color_override("font_color", GC.COLOR_ERROR)
-
-		TarotData.TarotEffect.GAIN_MONEY:
-			GS.money += 5
-			info_label.text = "🔮 " + Loc.i().t("The Hermit") + " +$5!"
-			info_label.add_theme_color_override("font_color", GC.COLOR_MONEY)
-			_update_ui()
-
-		TarotData.TarotEffect.CLONE_CARD:
-			if selected.size() >= 2:
-				var left_idx = hand.cards_in_hand.find(selected[0])
-				var right_idx = hand.cards_in_hand.find(selected[1])
-				var src_card: Node2D
-				var dst_card: Node2D
-				if left_idx < right_idx:
-					dst_card = selected[0]
-					src_card = selected[1]
-				else:
-					dst_card = selected[1]
-					src_card = selected[0]
-				dst_card.card_data.suit = src_card.card_data.suit
-				dst_card.card_data.rank = src_card.card_data.rank
-				dst_card.is_selected = false
-				src_card.is_selected = false
-				dst_card.queue_redraw()
-				src_card.queue_redraw()
-				info_label.text = "⚖️ Card transformed to " + src_card.card_data.get_display_name() + "!"
-				info_label.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-
-		TarotData.TarotEffect.SPAWN_TAROT:
-			var empty = consumable_slot.get_empty_slots()
-			var to_add = mini(2, empty)
-			if to_add <= 0:
-				info_label.text = "🌎 " + Loc.i().t("No empty slots!")
-				info_label.add_theme_color_override("font_color", GC.COLOR_ERROR)
-			else:
-				var new_tarots = TarotDatabase.get_random_tarots(to_add)
-				var names: PackedStringArray = []
-				for t in new_tarots:
-					consumable_slot.add_tarot(t)
-					names.append(t.tarot_name)
-				info_label.text = "🌎 Created " + ", ".join(names) + "!"
-				info_label.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-
-		TarotData.TarotEffect.SPAWN_PLANET:
-			var empty = consumable_slot.get_empty_slots()
-			var to_add = mini(2, empty)
-			if to_add <= 0:
-				info_label.text = "☀️ " + Loc.i().t("No empty slots!")
-				info_label.add_theme_color_override("font_color", GC.COLOR_ERROR)
-			else:
-				var new_planets = PlanetDatabase.get_random_planets(to_add)
-				var names: PackedStringArray = []
-				for p in new_planets:
-					consumable_slot.add_planet(p)
-					names.append(p.planet_name)
-				info_label.text = "☀️ Created " + ", ".join(names) + "!"
-				info_label.add_theme_color_override("font_color", Color(0.2, 0.6, 0.95))
-
-		TarotData.TarotEffect.RANDOM_LEVEL_UP:
-			var types = PokerHand.HandType.values()
-			var random_type = types[randi() % types.size()]
-			HandLevel.planet_level_up(random_type, 20, 2)
-			HandLevel.planet_level_up(random_type, 20, 2)
-			var hname = PokerHand.get_hand_name(random_type)
-			var lvl = HandLevel.get_level_info(random_type)["level"]
-			info_label.text = "🎰 " + Loc.i().t(hname) + " → Lv." + str(lvl) + "!"
-			info_label.add_theme_color_override("font_color", GC.COLOR_MONEY)
-			score_display.show_level_up(hname, lvl)
-
+	var result = TarotEffectProcessor.apply(tarot, selected, hand, consumable_slot)
+	if result["message"] != "":
+		info_label.text = result["message"]
+		info_label.add_theme_color_override("font_color", result["color"])
+	## GAIN_MONEY 需要刷新 UI
+	if tarot.effect == TarotData.TarotEffect.GAIN_MONEY:
+		_update_ui()
+	## RANDOM_LEVEL_UP 需要显示升级动画
+	if result.has("level_up"):
+		score_display.show_level_up(result["level_up"]["hand_name"], result["level_up"]["level"])
 	_update_preview()
-
-func _change_suit(cards: Array, new_suit: int, symbol: String) -> void:
-	var changed = 0
-	for card in cards:
-		card.card_data.suit = new_suit
-		card.is_selected = false
-		card.queue_redraw()
-		changed += 1
-	info_label.text = "Changed " + str(changed) + " card(s) to " + symbol + "!"
-	info_label.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
 
 ## ========== Joker/Consumable 悬停 ==========
 

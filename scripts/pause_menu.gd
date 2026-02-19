@@ -1,11 +1,13 @@
 ## pause_menu.gd
-## 暂停/标题菜单 V4 - 使用 Loc.i() 单例，无需 Autoload
+## 暂停/标题菜单 V5 - 回到主菜单 + 语言切换即时刷新
 extends Node2D
 
 signal resume_game()
 signal new_game()
 signal quit_game()
 signal continue_game()
+signal return_to_title()
+signal language_changed()
 
 const SCREEN_W: float = 1920.0
 const SCREEN_H: float = 1280.0
@@ -122,6 +124,7 @@ func _build_main_menu() -> void:
 			{"text": "⚙  " + _t("Settings"), "callback": _open_settings},
 			{"text": "🃏  " + _t("Collection"), "callback": _open_collection},
 			{"text": "📖  " + _t("Tutorial"), "callback": _open_tutorial},
+			{"text": "🏠  " + _t("Return to Title"), "callback": _on_return_to_title},
 			{"text": "✕  " + _t("Quit Game"), "callback": _on_quit},
 		]
 
@@ -141,6 +144,11 @@ func _on_continue() -> void:
 func _on_new_game() -> void:
 	SaveManager.delete_save()
 	visible = false; new_game.emit()
+
+func _on_return_to_title() -> void:
+	get_tree().paused = false
+	visible = false
+	return_to_title.emit()
 
 ## ========== 设置 ==========
 
@@ -203,6 +211,8 @@ func _cycle_language() -> void:
 		theme.set_default_font(loc.cn_font)
 	else:
 		theme.set_default_font(null)
+	## 通知 main.gd 刷新所有 UI
+	language_changed.emit()
 	_open_settings()
 
 ## ========== 收藏 ==========

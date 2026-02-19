@@ -45,6 +45,7 @@ var translations: Dictionary = {
 	## ===== 菜单 / 通用 UI =====
 	"PAUSED": {"中文": "暂停"},
 	"Continue": {"中文": "继续游戏"},
+	"Return to Title": {"中文": "回到主菜单"},
 	"New Game": {"中文": "新游戏"},
 	"Settings": {"中文": "设置"},
 	"Collection": {"中文": "收藏"},
