@@ -123,6 +123,11 @@ func _ready() -> void:
 	discard_button.pressed.connect(_on_discard_pressed)
 	sort_button.pressed.connect(_on_sort_toggle)
 
+	## 禁用所有按钮的 TAB 焦点导航，防止 TAB 被 UI 拦截
+	for btn in [play_button, discard_button, sort_button]:
+		if btn:
+			btn.focus_mode = Control.FOCUS_NONE
+
 	## draw/discard pile types
 	draw_pile.set("pile_type", 0)
 	discard_pile.set("pile_type", 1)
@@ -716,16 +721,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		GS.is_game_won = false
 		_return_to_title()
 		return
-	if not event is InputEventKey or not event.pressed:
-		## TAB 松开时隐藏状态面板
-		if event is InputEventKey and not event.pressed and event.keycode == KEY_TAB:
-			if status_panel and status_panel.visible:
-				status_panel.hide_panel()
+	if not event is InputEventKey:
+		return
+	## TAB 松开时隐藏状态面板
+	if not event.pressed and event.keycode == KEY_TAB:
+		if status_panel and status_panel.visible:
+			status_panel.hide_panel()
+		get_viewport().set_input_as_handled()
+		return
+	if not event.pressed:
 		return
 	match event.keycode:
 		KEY_TAB:
-			## TAB 状态面板 — 忽略长按重复，只在首次按下时显示
+			## TAB 状态面板 — 忽略长按重复
 			if event.is_echo():
+				get_viewport().set_input_as_handled()
 				return
 			if status_panel:
 				var voucher_ids: Array = []
@@ -738,6 +748,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					status_panel.hide_panel()
 				else:
 					status_panel.show_panel()
+				get_viewport().set_input_as_handled()
 		KEY_F1:
 			GS.money += 100
 			_update_ui()
