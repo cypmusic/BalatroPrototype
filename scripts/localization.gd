@@ -269,6 +269,8 @@ var translations: Dictionary = {
 	"Deck Tracker": {"中文": "牌库追踪"},
 	"Played": {"中文": "已出"},
 	"Remaining": {"中文": "剩余"},
+	"Hand Levels": {"中文": "牌型等级"},
+	"Hand Type": {"中文": "牌型"},
 
 	## ----- 右键出售 -----
 	"Right click to sell": {"中文": "右键出售"},
