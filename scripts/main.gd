@@ -724,7 +724,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	match event.keycode:
 		KEY_TAB:
-			## TAB 状态面板切换
+			## TAB 状态面板 — 忽略长按重复，只在首次按下时显示
+			if event.is_echo():
+				return
 			if status_panel:
 				var voucher_ids: Array = []
 				if shop.visible and shop.has_method("get_owned_voucher_ids"):
