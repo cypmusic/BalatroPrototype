@@ -51,6 +51,15 @@ var owned_voucher_ids: Array = []
 ## ========== TAB 状态面板 ==========
 var status_panel: Node2D = null
 
+## ========== 重启淡出/淡入过渡 ==========
+var fade_overlay: ColorRect = null
+var fade_state: int = 0  ## 0=无, 1=淡出中, 2=黑屏等待, 3=淡入中
+var fade_alpha: float = 0.0
+const FADE_OUT_SPEED: float = 2.5  ## 淡出速度
+const FADE_IN_SPEED: float = 1.8   ## 淡入速度
+const FADE_HOLD_TIME: float = 0.3  ## 黑屏停留时间
+var fade_hold_timer: float = 0.0
+
 ## ========== 快捷引用 ==========
 var GS: Node  ## GameState
 var GC  ## GameConfig (script class, not node)
@@ -118,6 +127,15 @@ func _ready() -> void:
 	status_panel.set_script(load("res://scripts/status_panel.gd"))
 	status_panel.name = "StatusPanel"
 	add_child(status_panel)
+
+	## 重启用淡出/淡入遮罩
+	fade_overlay = ColorRect.new()
+	fade_overlay.position = Vector2(0, 0)
+	fade_overlay.size = Vector2(GC.DESIGN_WIDTH, GC.DESIGN_HEIGHT)
+	fade_overlay.color = Color(0, 0, 0, 0)
+	fade_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fade_overlay.z_index = 300
+	add_child(fade_overlay)
 
 	play_button.pressed.connect(_on_play_pressed)
 	discard_button.pressed.connect(_on_discard_pressed)
@@ -305,6 +323,11 @@ func _advance_blind() -> void:
 ## ========== 游戏主循环 ==========
 
 func _process(delta: float) -> void:
+	## 淡出/淡入过渡处理
+	if fade_state > 0:
+		_process_fade(delta)
+		return  ## 过渡期间不处理其他逻辑
+
 	var overlay_open = (shop.visible or blind_select.visible or round_result.visible)
 	GS.overlay_active = overlay_open
 	hand.set_process(!overlay_open)
@@ -319,6 +342,32 @@ func _process(delta: float) -> void:
 		score_anim_timer += delta
 		if score_anim_timer > 1.0:
 			_start_exit_animation()
+
+func _process_fade(delta: float) -> void:
+	match fade_state:
+		1:  ## 淡出中（变黑）
+			fade_alpha += delta * FADE_OUT_SPEED
+			if fade_alpha >= 1.0:
+				fade_alpha = 1.0
+				fade_state = 2
+				fade_hold_timer = 0.0
+				## 黑屏时执行重启
+				round_result.visible = false
+				_restart_game()
+		2:  ## 黑屏停留
+			fade_hold_timer += delta
+			if fade_hold_timer >= FADE_HOLD_TIME:
+				fade_state = 3
+				## 打开盲注选择
+				_open_blind_select()
+		3:  ## 淡入中（变透明）
+			fade_alpha -= delta * FADE_IN_SPEED
+			if fade_alpha <= 0.0:
+				fade_alpha = 0.0
+				fade_state = 0
+				fade_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	fade_overlay.color = Color(0, 0, 0, fade_alpha)
 
 func _draw_initial_hand() -> void:
 	var drawn = deck.draw_cards(GC.INITIAL_HAND_SIZE)
@@ -581,7 +630,11 @@ func _on_shop_closed() -> void:
 	_advance_blind()
 
 func _on_restart_from_result() -> void:
-	vortex.start_transition()
+	## 开始淡出到黑屏
+	fade_state = 1
+	fade_alpha = 0.0
+	fade_hold_timer = 0.0
+	fade_overlay.mouse_filter = Control.MOUSE_FILTER_STOP  ## 阻挡点击
 
 ## ========== 胜利 ==========
 
