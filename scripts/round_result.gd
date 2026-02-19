@@ -99,8 +99,10 @@ func _build_victory() -> void:
 	_af(income_lbl, 48); add_child(income_lbl)
 
 	var shop_btn = Button.new()
-	shop_btn.text = "   " + _t("Go to Shop") + "   "
-	shop_btn.position = Vector2(CENTER_X - 100, 580)
+	shop_btn.text = _t("Go to Shop")
+	shop_btn.custom_minimum_size = Vector2(220, 50)
+	shop_btn.position = Vector2(CENTER_X - 110, 580)
+	shop_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_afb(shop_btn, 28)
 	shop_btn.pressed.connect(_on_go_to_shop)
 	add_child(shop_btn)
@@ -131,8 +133,10 @@ func _build_defeat() -> void:
 	_af(score_lbl, 40); add_child(score_lbl)
 
 	var restart_btn = Button.new()
-	restart_btn.text = "   " + _t("Try Again") + "   "
-	restart_btn.position = Vector2(CENTER_X - 90, 500)
+	restart_btn.text = _t("Try Again")
+	restart_btn.custom_minimum_size = Vector2(220, 50)
+	restart_btn.position = Vector2(CENTER_X - 110, 500)
+	restart_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_afb(restart_btn, 28)
 	restart_btn.pressed.connect(_on_restart)
 	add_child(restart_btn)
