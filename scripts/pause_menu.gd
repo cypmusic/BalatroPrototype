@@ -125,7 +125,7 @@ func _build_main_menu() -> void:
 			Vector2(CENTER_X - BTN_W/2, start_y + i * BTN_SPACING),
 			22, BTN_W, BTN_H, buttons[i]["callback"]))
 
-	add_child(_make_label("GameConfig.VERSION_LABEL",
+	add_child(_make_label(GameConfig.VERSION_LABEL,
 		Vector2(CENTER_X - MENU_W/2, CENTER_Y + MENU_H/2 - 40),
 		12, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
 

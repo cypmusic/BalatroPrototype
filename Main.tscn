@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://b5qkhg4j4liof"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://co1w3ues6d2uc" path="res://scripts/main.gd" id="1_glv2v"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/deck.gd" id="2_deck"]
 [ext_resource type="Script" path="res://scripts/hand.gd" id="3_hand"]
 [ext_resource type="Script" path="res://scripts/score_display.gd" id="4_score"]
@@ -16,7 +16,7 @@
 [ext_resource type="Script" path="res://scripts/vortex_transition.gd" id="14_vortex"]
 
 [node name="Main" type="Node2D"]
-script = ExtResource("1_glv2v")
+script = ExtResource("1_main")
 
 [node name="Deck" type="Node" parent="."]
 script = ExtResource("2_deck")
@@ -66,9 +66,8 @@ script = ExtResource("14_vortex")
 [node name="UILayer" type="Node2D" parent="."]
 
 [node name="TitleLabel" type="Label" parent="UILayer"]
-offset_left = 0.0
-offset_top = 15.0
 offset_right = 1920.0
+offset_top = 15.0
 offset_bottom = 50.0
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 28
@@ -76,9 +75,8 @@ theme_override_colors/font_color = Color(0.95, 0.85, 0.4, 1)
 text = "BALATRO PROTOTYPE"
 
 [node name="InfoLabel" type="Label" parent="UILayer"]
-offset_left = 0.0
-offset_top = 50.0
 offset_right = 1920.0
+offset_top = 50.0
 offset_bottom = 80.0
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 20
@@ -109,18 +107,16 @@ theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.6, 0.6, 0.55, 1)
 
 [node name="BossEffectLabel" type="Label" parent="UILayer"]
-offset_left = 0.0
-offset_top = 480.0
 offset_right = 1920.0
+offset_top = 480.0
 offset_bottom = 510.0
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.9, 0.3, 0.3, 1)
 
 [node name="JokerInfoLabel" type="Label" parent="UILayer"]
-offset_left = 0.0
-offset_top = 275.0
 offset_right = 1920.0
+offset_top = 275.0
 offset_bottom = 300.0
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 16

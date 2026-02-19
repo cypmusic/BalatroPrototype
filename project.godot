@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="BalatroPrototype V1"
-run/main_scene="uid://dhn2dadhod4wq"
+run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
