@@ -88,6 +88,8 @@ func _ready() -> void:
 	consumable_slot.hand_ref = hand
 	pause_menu.joker_slot_ref = joker_slot
 	pause_menu.new_game.connect(_on_new_game_from_menu)
+	if pause_menu.has_signal("continue_game"):
+		pause_menu.continue_game.connect(_on_continue_from_menu)
 	vortex.transition_midpoint.connect(_on_vortex_midpoint)
 	vortex.transition_complete.connect(_on_vortex_complete)
 	play_button.pressed.connect(_on_play_pressed)
@@ -125,6 +127,20 @@ func _on_new_game_from_menu() -> void:
 		pause_menu.visible = false
 	vortex.start_transition()
 
+## 标题菜单点击 Continue → 读档恢复
+func _on_continue_from_menu() -> void:
+	var ts = get_node_or_null("TitleScreen")
+	if ts:
+		ts.visible = false
+		ts.stop_bgm()
+	if pause_menu:
+		pause_menu.visible = false
+	if SaveManager.load_game(self):
+		_update_ui()
+		_open_blind_select()
+	else:
+		vortex.start_transition()
+
 func _on_vortex_midpoint() -> void:
 	var ts = get_node_or_null("TitleScreen")
 	if ts:
@@ -143,6 +159,8 @@ func _on_title_start_game() -> void:
 ## ========== 盲注选择 ==========
 
 func _open_blind_select() -> void:
+	## 自动存档（回合间安全点）
+	SaveManager.save_game(self)
 	if GS.ante_boss == null:
 		GS.ante_boss = BlindData.get_random_boss(GS.used_boss_names)
 		GS.used_boss_names.append(GS.ante_boss.name)
@@ -460,6 +478,7 @@ func _trigger_victory() -> void:
 	round_result.show_victory(score_display.round_score, score_display.target_score, income, blind_name)
 
 func _trigger_defeat() -> void:
+	SaveManager.delete_save()
 	GS.is_round_ended = true
 	play_button.disabled = true
 	discard_button.disabled = true
@@ -491,6 +510,7 @@ func _on_restart_from_result() -> void:
 ## ========== 胜利 ==========
 
 func _show_game_victory() -> void:
+	SaveManager.delete_save()
 	info_label.text = ""
 	if victory_celebration:
 		victory_celebration.start_celebration()

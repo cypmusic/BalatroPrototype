@@ -149,7 +149,7 @@ func _build_ui() -> void:
 	money_label.text = "$ " + str(money)
 
 	shop_info_label = Label.new()
-	shop_info_label.position = Vector2(0, 115)
+	shop_info_label.position = Vector2(0, 135)
 	shop_info_label.custom_minimum_size = Vector2(SHOP_WIDTH, 0)
 	shop_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	shop_info_label.add_theme_font_size_override("font_size", 16)

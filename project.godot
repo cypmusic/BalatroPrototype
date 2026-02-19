@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 GameConfig="*uid://ds5ws45il4f5v"
 GameState="*uid://djmysh7fldnbf"
+SaveManager="*res://scripts/save_manager.gd"
 
 [display]
 

@@ -5,6 +5,7 @@ extends Node2D
 signal resume_game()
 signal new_game()
 signal quit_game()
+signal continue_game()
 
 const SCREEN_W: float = 1920.0
 const SCREEN_H: float = 1280.0
@@ -103,13 +104,18 @@ func _build_main_menu() -> void:
 
 	var buttons: Array
 	if mode == MenuMode.TITLE:
-		buttons = [
-			{"text": "▶  " + _t("New Game"), "callback": _on_new_game},
+		buttons = []
+		if SaveManager.has_save():
+			var info = SaveManager.get_save_info()
+			var cont_label = "▶  " + _t("Continue") + " (Ante " + str(info.get("ante", 1)) + " · $" + str(info.get("money", 0)) + ")"
+			buttons.append({"text": cont_label, "callback": _on_continue})
+		buttons.append({"text": "▶  " + _t("New Game"), "callback": _on_new_game})
+		buttons.append_array([
 			{"text": "⚙  " + _t("Settings"), "callback": _open_settings},
 			{"text": "🃏  " + _t("Collection"), "callback": _open_collection},
 			{"text": "📖  " + _t("Tutorial"), "callback": _open_tutorial},
 			{"text": "✕  " + _t("Quit Game"), "callback": _on_quit},
-		]
+		])
 	else:
 		buttons = [
 			{"text": "▶  " + _t("Continue"), "callback": close_menu},
@@ -129,7 +135,11 @@ func _build_main_menu() -> void:
 		Vector2(CENTER_X - MENU_W/2, CENTER_Y + MENU_H/2 - 40),
 		12, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
 
+func _on_continue() -> void:
+	visible = false; continue_game.emit()
+
 func _on_new_game() -> void:
+	SaveManager.delete_save()
 	visible = false; new_game.emit()
 
 ## ========== 设置 ==========

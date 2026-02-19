@@ -1,12 +1,12 @@
 ## game_config.gd
-## 全局配置单例 (AutoLoad) — V0.071
+## 全局配置单例 (AutoLoad) — V0.072
 ## 集中管理版本号、布局常量、游戏平衡性参数
 ## 在 Project Settings → AutoLoad 中注册为 "GameConfig"
 extends Node
 
 ## ========== 版本信息 ==========
-const VERSION: String = "V0.071"
-const VERSION_LABEL: String = "V0.071 beta"
+const VERSION: String = "V0.072"
+const VERSION_LABEL: String = "V0.072 beta"
 
 ## ========== 设计分辨率 ==========
 const DESIGN_WIDTH: float = 1920.0
