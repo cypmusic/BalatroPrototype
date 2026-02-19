@@ -58,6 +58,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif mode == MenuMode.PAUSE:
 				close_menu()
 		else:
+			## 标题画面时不弹出暂停菜单
+			var ts = get_tree().root.get_node_or_null("Main/TitleScreen")
+			if ts and ts.visible:
+				return
 			open_as_pause()
 		get_viewport().set_input_as_handled()
 
