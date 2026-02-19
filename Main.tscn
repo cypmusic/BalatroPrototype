@@ -1,6 +1,189 @@
-[gd_scene format=3 uid="uid://dhn2dadhod4wq"]
+[gd_scene format=3 uid="uid://b5qkhg4j4liof"]
 
 [ext_resource type="Script" uid="uid://co1w3ues6d2uc" path="res://scripts/main.gd" id="1_glv2v"]
+[ext_resource type="Script" path="res://scripts/deck.gd" id="2_deck"]
+[ext_resource type="Script" path="res://scripts/hand.gd" id="3_hand"]
+[ext_resource type="Script" path="res://scripts/score_display.gd" id="4_score"]
+[ext_resource type="Script" path="res://scripts/hand_preview.gd" id="5_preview"]
+[ext_resource type="Script" path="res://scripts/joker_slot.gd" id="6_joker"]
+[ext_resource type="Script" path="res://scripts/card_pile.gd" id="7_pile"]
+[ext_resource type="Script" path="res://scripts/consumable_slot.gd" id="8_cons"]
+[ext_resource type="Script" path="res://scripts/shop.gd" id="9_shop"]
+[ext_resource type="Script" path="res://scripts/blind_select.gd" id="10_blind"]
+[ext_resource type="Script" path="res://scripts/round_result.gd" id="11_result"]
+[ext_resource type="Script" path="res://scripts/victory_celebration.gd" id="12_victory"]
+[ext_resource type="Script" path="res://scripts/pause_menu.gd" id="13_pause"]
+[ext_resource type="Script" path="res://scripts/vortex_transition.gd" id="14_vortex"]
 
-[node name="Node2D" type="Node2D" unique_id=2084064745]
+[node name="Main" type="Node2D"]
 script = ExtResource("1_glv2v")
+
+[node name="Deck" type="Node" parent="."]
+script = ExtResource("2_deck")
+
+[node name="Hand" type="Node2D" parent="."]
+script = ExtResource("3_hand")
+
+[node name="ScoreDisplay" type="Node2D" parent="."]
+script = ExtResource("4_score")
+
+[node name="HandPreview" type="Node2D" parent="."]
+script = ExtResource("5_preview")
+
+[node name="JokerSlot" type="Node2D" parent="."]
+script = ExtResource("6_joker")
+
+[node name="DrawPile" type="Node2D" parent="."]
+script = ExtResource("7_pile")
+
+[node name="DiscardPile" type="Node2D" parent="."]
+script = ExtResource("7_pile")
+
+[node name="ConsumableSlot" type="Node2D" parent="."]
+script = ExtResource("8_cons")
+
+[node name="Shop" type="Node2D" parent="."]
+z_index = 50
+script = ExtResource("9_shop")
+
+[node name="BlindSelect" type="Node2D" parent="."]
+z_index = 50
+script = ExtResource("10_blind")
+
+[node name="RoundResult" type="Node2D" parent="."]
+z_index = 50
+script = ExtResource("11_result")
+
+[node name="VictoryCelebration" type="Node2D" parent="."]
+script = ExtResource("12_victory")
+
+[node name="PauseMenu" type="Node2D" parent="."]
+script = ExtResource("13_pause")
+
+[node name="VortexTransition" type="Node2D" parent="."]
+script = ExtResource("14_vortex")
+
+[node name="UILayer" type="Node2D" parent="."]
+
+[node name="TitleLabel" type="Label" parent="UILayer"]
+offset_left = 0.0
+offset_top = 15.0
+offset_right = 1920.0
+offset_bottom = 50.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.95, 0.85, 0.4, 1)
+text = "BALATRO PROTOTYPE"
+
+[node name="InfoLabel" type="Label" parent="UILayer"]
+offset_left = 0.0
+offset_top = 50.0
+offset_right = 1920.0
+offset_bottom = 80.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.7, 0.7, 0.65, 1)
+
+[node name="MoneyLabel" type="Label" parent="UILayer"]
+offset_left = 1700.0
+offset_top = 340.0
+offset_right = 1900.0
+offset_bottom = 370.0
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.95, 0.8, 0.2, 1)
+
+[node name="AnteLabel" type="Label" parent="UILayer"]
+offset_left = 1700.0
+offset_top = 375.0
+offset_right = 1900.0
+offset_bottom = 395.0
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6, 0.6, 0.55, 1)
+
+[node name="BlindLabel" type="Label" parent="UILayer"]
+offset_left = 1700.0
+offset_top = 397.0
+offset_right = 1900.0
+offset_bottom = 417.0
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6, 0.6, 0.55, 1)
+
+[node name="BossEffectLabel" type="Label" parent="UILayer"]
+offset_left = 0.0
+offset_top = 480.0
+offset_right = 1920.0
+offset_bottom = 510.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.9, 0.3, 0.3, 1)
+
+[node name="JokerInfoLabel" type="Label" parent="UILayer"]
+offset_left = 0.0
+offset_top = 275.0
+offset_right = 1920.0
+offset_bottom = 300.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.8, 0.8, 0.75, 1)
+
+[node name="HandsLabel" type="Label" parent="UILayer"]
+offset_left = 680.0
+offset_top = 852.0
+offset_right = 880.0
+offset_bottom = 875.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.3, 0.6, 0.9, 1)
+
+[node name="DiscardsLabel" type="Label" parent="UILayer"]
+offset_left = 1040.0
+offset_top = 852.0
+offset_right = 1240.0
+offset_bottom = 875.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.9, 0.35, 0.3, 1)
+
+[node name="DrawPileLabel" type="Label" parent="UILayer"]
+offset_left = 1735.0
+offset_top = 830.0
+offset_right = 1825.0
+offset_bottom = 850.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6, 0.6, 0.55, 1)
+text = "DRAW"
+
+[node name="DiscardPileLabel" type="Label" parent="UILayer"]
+offset_left = 95.0
+offset_top = 830.0
+offset_right = 185.0
+offset_bottom = 850.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6, 0.6, 0.55, 1)
+text = "DISCARD"
+
+[node name="PlayButton" type="Button" parent="UILayer"]
+offset_left = 680.0
+offset_top = 880.0
+offset_right = 880.0
+offset_bottom = 915.0
+theme_override_font_sizes/font_size = 22
+text = "   Play Hand   "
+
+[node name="DiscardButton" type="Button" parent="UILayer"]
+offset_left = 1040.0
+offset_top = 880.0
+offset_right = 1240.0
+offset_bottom = 915.0
+theme_override_font_sizes/font_size = 22
+text = "   Discard   "
+
+[node name="SortButton" type="Button" parent="UILayer"]
+offset_left = 860.0
+offset_top = 925.0
+offset_right = 1060.0
+offset_bottom = 955.0
+theme_override_font_sizes/font_size = 16
+text = " ♠♥♣♦ / A→2 "

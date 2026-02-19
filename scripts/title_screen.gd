@@ -123,7 +123,7 @@ func _build_ui() -> void:
 	add_child(start_button)
 
 	version_label = Label.new()
-	version_label.text = "V0.065 beta"
+	version_label.text = "GameConfig.VERSION_LABEL"
 	version_label.position = Vector2(0, SCREEN_H - 50)
 	version_label.custom_minimum_size = Vector2(SCREEN_W, 0)
 	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
