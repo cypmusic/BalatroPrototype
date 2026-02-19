@@ -123,7 +123,7 @@ func _ready() -> void:
 	discard_button.pressed.connect(_on_discard_pressed)
 	sort_button.pressed.connect(_on_sort_toggle)
 
-	## 禁用所有按钮的 TAB 焦点导航，防止 TAB 被 UI 拦截
+	## 禁用按钮 TAB 焦点导航，防止 TAB 被 UI 拦截
 	for btn in [play_button, discard_button, sort_button]:
 		if btn:
 			btn.focus_mode = Control.FOCUS_NONE
@@ -329,6 +329,7 @@ func _draw_initial_hand() -> void:
 
 func _on_hand_changed() -> void:
 	_update_preview()
+	_update_enhancement_info()
 
 func _update_preview() -> void:
 	var selected = hand.get_selected_cards()
@@ -344,6 +345,36 @@ func _update_preview() -> void:
 	preview["total_mult"] = joker_result["total_mult"]
 	preview["final_score"] = joker_result["final_score"]
 	hand_preview.update_preview(preview)
+
+## ========== 增强属性提示（仅选中时显示）==========
+
+func _update_enhancement_info() -> void:
+	var selected = hand.get_selected_cards()
+	## 检查选中的牌是否有增强属性
+	var enhance_texts: PackedStringArray = []
+	for card in selected:
+		if card.card_data and card.card_data.enhancement != CardData.Enhancement.NONE:
+			var name = card.card_data.get_display_name()
+			var enhance_name: String
+			var enhance_desc: String
+			var emoji: String
+			match card.card_data.enhancement:
+				CardData.Enhancement.FOIL:
+					emoji = "✨"
+					enhance_name = Loc.i().t("Foil")
+					enhance_desc = "+50 " + Loc.i().t("Chips")
+				CardData.Enhancement.HOLOGRAPHIC:
+					emoji = "🌈"
+					enhance_name = Loc.i().t("Holographic")
+					enhance_desc = "+10 " + Loc.i().t("Mult")
+				CardData.Enhancement.POLYCHROME:
+					emoji = "🎨"
+					enhance_name = Loc.i().t("Polychrome")
+					enhance_desc = "×1.5 " + Loc.i().t("Mult")
+			enhance_texts.append(emoji + " " + enhance_name + " " + name + " " + enhance_desc)
+	if enhance_texts.size() > 0:
+		info_label.text = ", ".join(enhance_texts)
+		info_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.2))
 
 ## ========== Boss 效果（委托 BossEffectProcessor）==========
 
