@@ -48,6 +48,9 @@ var discard_exit_remaining: int = 0
 ## ========== Voucher 状态 ==========
 var owned_voucher_ids: Array = []
 
+## ========== TAB 状态面板 ==========
+var status_panel: Node2D = null
+
 ## ========== 快捷引用 ==========
 var GS: Node  ## GameState
 var GC  ## GameConfig (script class, not node)
@@ -80,6 +83,9 @@ func _ready() -> void:
 	hand.position = Vector2(GC.CENTER_X, 0)
 	hand.draw_pile_source = GC.DRAW_PILE_POS
 	hand_preview.position = Vector2(GC.CENTER_X, GC.PREVIEW_Y)
+	boss_effect_label.position = Vector2(0, GC.PREVIEW_Y + 80)
+	boss_effect_label.custom_minimum_size = Vector2(GC.DESIGN_WIDTH, 0)
+	boss_effect_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	joker_slot.position = Vector2(GC.CENTER_X, GC.JOKER_Y)
 	draw_pile.position = GC.DRAW_PILE_POS
 	discard_pile.position = GC.DISCARD_PILE_POS
@@ -106,6 +112,13 @@ func _ready() -> void:
 	pause_menu.language_changed.connect(_on_language_changed)
 	vortex.transition_midpoint.connect(_on_vortex_midpoint)
 	vortex.transition_complete.connect(_on_vortex_complete)
+
+	## TAB 状态面板
+	status_panel = Node2D.new()
+	status_panel.set_script(load("res://scripts/status_panel.gd"))
+	status_panel.name = "StatusPanel"
+	add_child(status_panel)
+
 	play_button.pressed.connect(_on_play_pressed)
 	discard_button.pressed.connect(_on_discard_pressed)
 	sort_button.pressed.connect(_on_sort_toggle)
@@ -364,6 +377,10 @@ func _on_play_pressed() -> void:
 	pending_score_result = final_result
 	pending_play_cards = selected.duplicate()
 
+	## 记录打出的牌用于 TAB 面板追踪
+	if status_panel:
+		status_panel.record_played_cards(selected)
+
 	var scoring_cards = base_result["scoring_cards"]
 	for i in range(scoring_cards.size()):
 		scoring_cards[i].play_score_animation(i * 0.12)
@@ -544,6 +561,8 @@ func _return_to_title() -> void:
 	GS.reset()
 	HandLevel.reset()
 	owned_voucher_ids.clear()
+	if status_panel:
+		status_panel.reset_tracking()
 	## 重置动态上限
 	joker_slot.MAX_JOKERS = 5
 	consumable_slot.MAX_CONSUMABLES = 2
@@ -581,6 +600,8 @@ func _return_to_title_state() -> void:
 	GS.reset()
 	HandLevel.reset()
 	owned_voucher_ids.clear()
+	if status_panel:
+		status_panel.reset_tracking()
 	joker_slot.MAX_JOKERS = 5
 	consumable_slot.MAX_CONSUMABLES = 2
 	while joker_slot.get_owned_jokers().size() > 0:
@@ -696,8 +717,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		_return_to_title()
 		return
 	if not event is InputEventKey or not event.pressed:
+		## TAB 松开时隐藏状态面板
+		if event is InputEventKey and not event.pressed and event.keycode == KEY_TAB:
+			if status_panel and status_panel.visible:
+				status_panel.hide_panel()
 		return
 	match event.keycode:
+		KEY_TAB:
+			## TAB 状态面板切换
+			if status_panel:
+				var voucher_ids: Array = []
+				if shop.visible and shop.has_method("get_owned_voucher_ids"):
+					voucher_ids = shop.get_owned_voucher_ids()
+				else:
+					voucher_ids = owned_voucher_ids
+				status_panel.update_vouchers(voucher_ids)
+				if status_panel.visible:
+					status_panel.hide_panel()
+				else:
+					status_panel.show_panel()
 		KEY_F1:
 			GS.money += 100
 			_update_ui()

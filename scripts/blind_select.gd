@@ -298,7 +298,133 @@ func _on_play_current() -> void:
 
 func _on_skip_current() -> void:
 	var reward_id = ""
+	var reward_info = null
 	if current_blind_index < skip_rewards.size():
-		reward_id = skip_rewards[current_blind_index]["id"]
-	visible = false
-	blind_skipped.emit(reward_id)
+		reward_info = skip_rewards[current_blind_index]
+		reward_id = reward_info["id"]
+	if reward_info:
+		_play_skip_reward_animation(reward_info, reward_id)
+	else:
+		visible = false
+		blind_skipped.emit(reward_id)
+
+## ========== 跳过奖励动画 ==========
+
+var anim_active: bool = false
+var anim_timer: float = 0.0
+var anim_reward_info: Dictionary = {}
+var anim_reward_id: String = ""
+var anim_confetti: Array = []
+const ANIM_DURATION: float = 3.5
+
+func _play_skip_reward_animation(reward_info: Dictionary, reward_id: String) -> void:
+	anim_reward_info = reward_info
+	anim_reward_id = reward_id
+	anim_active = true
+	anim_timer = 0.0
+	## 清除盲注界面的所有子节点，让 _draw 动画完全可见
+	for child in get_children():
+		child.queue_free()
+	card_canvas = null
+	## 生成彩带粒子
+	anim_confetti.clear()
+	for i in range(80):
+		var confetti = {
+			"pos": Vector2(randf_range(100, SCREEN_W - 100), randf_range(-200, -50)),
+			"vel": Vector2(randf_range(-80, 80), randf_range(150, 400)),
+			"rot": randf() * TAU,
+			"rot_speed": randf_range(-5, 5),
+			"color": [
+				Color(1.0, 0.3, 0.3), Color(0.3, 0.8, 1.0), Color(1.0, 0.85, 0.2),
+				Color(0.4, 1.0, 0.4), Color(1.0, 0.5, 0.8), Color(0.6, 0.4, 1.0)
+			][randi() % 6],
+			"size": Vector2(randf_range(4, 12), randf_range(8, 20)),
+			"delay": randf_range(0, 0.5),
+		}
+		anim_confetti.append(confetti)
+
+func _process(delta: float) -> void:
+	if not anim_active:
+		return
+	anim_timer += delta
+	## 更新彩带
+	for c in anim_confetti:
+		if anim_timer > c["delay"]:
+			c["pos"] += c["vel"] * delta
+			c["vel"].x += randf_range(-20, 20) * delta
+			c["rot"] += c["rot_speed"] * delta
+	queue_redraw()
+	## 动画结束
+	if anim_timer >= ANIM_DURATION:
+		anim_active = false
+		anim_confetti.clear()
+		visible = false
+		blind_skipped.emit(anim_reward_id)
+
+func _draw() -> void:
+	if not anim_active:
+		return
+
+	## 暗色遮罩覆盖盲注背景
+	var mask_alpha = clampf(anim_timer / 0.3, 0.0, 0.85)
+	draw_rect(Rect2(0, 0, SCREEN_W, SCREEN_H), Color(0.02, 0.04, 0.06, mask_alpha))
+
+	## 奖励卡牌缩放动画：从0缩放到1.5倍大盲注卡牌尺寸
+	var scale_progress = clampf(anim_timer / 0.6, 0.0, 1.0)
+	## ease out back 弹性缓动
+	var t = 1.0 - pow(1.0 - scale_progress, 3.0)
+	if scale_progress < 1.0:
+		t = t * (1.0 + 0.3 * sin(t * PI))
+
+	var target_w = CARD_W * 1.5
+	var target_h = CARD_H * 1.5
+	var card_w = target_w * t
+	var card_h = target_h * t
+
+	if card_w > 2 and card_h > 2:
+		var cx = CENTER_X
+		var cy = 450.0
+		var card_rect = Rect2(cx - card_w / 2, cy - card_h / 2, card_w, card_h)
+
+		## 卡牌背景
+		draw_rect(card_rect, Color(0.12, 0.15, 0.2, 0.95))
+
+		## 边框
+		var border_color = Color(0.5, 0.8, 0.95)
+		var bw = 3.0
+		draw_rect(Rect2(card_rect.position, Vector2(card_rect.size.x, bw)), border_color)
+		draw_rect(Rect2(card_rect.position + Vector2(0, card_rect.size.y - bw), Vector2(card_rect.size.x, bw)), border_color)
+		draw_rect(Rect2(card_rect.position, Vector2(bw, card_rect.size.y)), border_color)
+		draw_rect(Rect2(card_rect.position + Vector2(card_rect.size.x - bw, 0), Vector2(bw, card_rect.size.y)), border_color)
+
+		## 奖励内容（仅在缩放完成后淡入）
+		var text_alpha = clampf((anim_timer - 0.4) / 0.3, 0.0, 1.0)
+		if text_alpha > 0.01:
+			var font = Loc.i().cn_font
+			var emoji = anim_reward_info.get("emoji", "🎁")
+			var reward_name = _t(anim_reward_info.get("name", "Reward"))
+			var reward_desc = _t(anim_reward_info.get("desc", ""))
+
+			## Emoji
+			_draw_centered_text(emoji, cx, cy - card_h * 0.2, 50, Color(1, 1, 1, text_alpha), font)
+			## 名称
+			_draw_centered_text(reward_name, cx, cy + card_h * 0.05, 26, Color(0.95, 0.85, 0.4, text_alpha), font)
+			## 描述
+			_draw_centered_text(reward_desc, cx, cy + card_h * 0.2, 16, Color(0.7, 0.7, 0.65, text_alpha), font)
+			## 跳过奖励标签
+			_draw_centered_text(_t("Skip reward") + "!", cx, cy - card_h * 0.38, 18, Color(0.5, 0.8, 0.95, text_alpha), font)
+
+	## 绘制彩带
+	for c in anim_confetti:
+		if anim_timer > c["delay"]:
+			var alpha = clampf(1.0 - (anim_timer - ANIM_DURATION + 0.5) / 0.5, 0.0, 1.0)
+			var col = Color(c["color"].r, c["color"].g, c["color"].b, alpha * 0.9)
+			var sz = c["size"]
+			draw_rect(Rect2(c["pos"] - sz / 2, sz), col)
+
+func _draw_centered_text(text: String, cx: float, cy: float, size: int, color: Color, font_res) -> void:
+	var f = font_res if font_res else ThemeDB.fallback_font
+	if f == null:
+		return
+	var tw = f.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	draw_string(f, Vector2(cx - tw / 2, cy + size * 0.4), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)

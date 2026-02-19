@@ -1,5 +1,5 @@
 ## boss_effect.gd
-## Boss 盲注效果处理器 V1 — 从 main.gd 抽取
+## Boss 盲注效果处理器 V2 — 修复花色debuff枚举比较Bug
 ## 静态函数修改计分结果
 class_name BossEffectProcessor
 extends RefCounted
@@ -14,7 +14,7 @@ static func apply_to_result(result: Dictionary, boss, hands_played: int = 0) -> 
 
 	match boss.effect:
 		BlindData.BossEffect.NO_FACE_CARDS:
-			var new_chips = result["base_chips"] + result.get("level_bonus_chips", 0)
+			var new_chips: int = result["base_chips"] + result.get("level_bonus_chips", 0)
 			for card in result["scoring_cards"]:
 				if card.card_data.rank < 11:
 					new_chips += card.card_data.get_chip_value()
@@ -40,10 +40,12 @@ static func apply_to_result(result: Dictionary, boss, hands_played: int = 0) -> 
 
 
 ## 禁用特定花色的卡牌筹码
-static func _debuff_suit(result: Dictionary, suit) -> void:
-	var new_chips = result["base_chips"] + result.get("level_bonus_chips", 0)
+## 使用 int() 强制转换确保枚举比较一致
+static func _debuff_suit(result: Dictionary, debuff_suit_id: int) -> void:
+	var new_chips: int = result["base_chips"] + result.get("level_bonus_chips", 0)
 	for card in result["scoring_cards"]:
-		if card.card_data.suit != suit:
+		## 强制 int 比较，避免枚举类型不匹配
+		if int(card.card_data.suit) != int(debuff_suit_id):
 			new_chips += card.card_data.get_chip_value()
 	result["total_chips"] = new_chips
 	result["final_score"] = new_chips * result["total_mult"]

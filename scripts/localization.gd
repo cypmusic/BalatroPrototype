@@ -197,41 +197,6 @@ var translations: Dictionary = {
 	"+8 Mult if hand is Pair": {"中文": "打出对子时 +8倍率"},
 	"+12 Mult if Three of a Kind": {"中文": "打出三条时 +12倍率"},
 	"×2 Mult if hand contains a Pair": {"中文": "牌型含对子时 ×2倍率"},
-	## ----- 卡牌增强 -----
-"Foil": {"中文": "箔片"},
-"Holographic": {"中文": "全息"},
-"Polychrome": {"中文": "多彩"},
-"Enhancement": {"中文": "增强"},
-
-
-## ----- 增强塔罗牌描述 -----
-"Add Foil to 1 card (+50 Chips)": {"中文": "为1张牌添加箔片(+50筹码)"},
-"Add Holographic to 1 card (+10 Mult)": {"中文": "为1张牌添加全息(+10倍率)"},
-"Add Polychrome to 1 card (×1.5 Mult)": {"中文": "为1张牌添加多彩(×1.5倍率)"},
-
-## ----- Voucher 系统 -----
-"VOUCHER": {"中文": "优惠券"},
-"Voucher": {"中文": "优惠券"},
-
-## ----- Voucher 名称 -----
-"Overstock": {"中文": "库存过剩"},
-"Clearance Sale": {"中文": "清仓大甩卖"},
-"Hone": {"中文": "磨砺"},
-"Reroll Surplus": {"中文": "刷新盈余"},
-"Crystal Ball": {"中文": "水晶球"},
-"Telescope": {"中文": "望远镜"},
-"Grabber": {"中文": "抓取者"},
-"Wasteful": {"中文": "挥霍者"},
-
-## ----- Voucher 描述 -----
-"+1 Joker slot": {"中文": "+1小丑栏位"},
-"10% discount on shop items": {"中文": "商店物品打9折"},
-"+1 Hand per round": {"中文": "每回合+1手牌"},
-"-$2 Reroll cost": {"中文": "刷新费用-$2"},
-"+1 Consumable slot": {"中文": "+1消耗品栏位"},
-"Interest cap raised to $10": {"中文": "利息上限提升至$10"},
-"+1 Hand per round (stacks)": {"中文": "每回合+1手牌(可叠加)"},
-"+1 Discard per round": {"中文": "每回合+1弃牌"},
 	"+50 Chips": {"中文": "+50 筹码"},
 	"+30 Chips per discard remaining": {"中文": "每剩余1次弃牌 +30筹码"},
 	"+15 Mult when 0 discards remaining": {"中文": "剩余弃牌为0时 +15倍率"},
@@ -240,6 +205,73 @@ var translations: Dictionary = {
 	"+4 Mult for each even card scored": {"中文": "每张计分偶数牌 +4倍率"},
 	"+30 Chips for each odd card scored": {"中文": "每张计分奇数牌 +30筹码"},
 	"×3 Mult if hand contains Three of a Kind": {"中文": "牌型含三条时 ×3倍率"},
+
+	## ----- 卡牌增强 -----
+	"Foil": {"中文": "箔片"},
+	"Holographic": {"中文": "全息"},
+	"Polychrome": {"中文": "多彩"},
+	"Enhancement": {"中文": "增强"},
+
+	## ----- 增强类塔罗牌名称 -----
+	"The Empress": {"中文": "女皇"},
+	"The Emperor": {"中文": "皇帝"},
+	"Temperance": {"中文": "节制"},
+	"The High Priestess": {"中文": "女祭司"},
+	"The Hierophant": {"中文": "教皇"},
+	"Justice": {"中文": "正义"},
+	"Strength": {"中文": "力量"},
+	"The Hanged Man": {"中文": "倒吊人"},
+	"The Devil": {"中文": "恶魔"},
+	"The Moon": {"中文": "月亮"},
+
+	## ----- 增强类塔罗牌描述 -----
+	"Add Foil to 1 card (+50 Chips)": {"中文": "为1张牌添加箔片 (+50筹码)"},
+	"Add Holo to 1 card (+10 Mult)": {"中文": "为1张牌添加全息 (+10倍率)"},
+	"Add Holographic to 1 card (+10 Mult)": {"中文": "为1张牌添加全息 (+10倍率)"},
+	"Add Polychrome to 1 card (×1.5 Mult)": {"中文": "为1张牌添加多彩 (×1.5倍率)"},
+	"Enhance 1 card with Bonus (+30 Chips)": {"中文": "为1张牌添加奖励 (+30筹码)"},
+	"Enhance 1 card with Mult (+4 Mult)": {"中文": "为1张牌添加倍率 (+4倍率)"},
+	"Enhance 1 card with Wild": {"中文": "为1张牌添加万能（可当任意花色）"},
+	"Enhance 1 card with Glass (×2 Mult, may break)": {"中文": "为1张牌添加玻璃 (×2倍率，可能碎裂)"},
+	"Enhance 1 card with Steel (×1.5 Mult while in hand)": {"中文": "为1张牌添加钢铁 (在手时×1.5倍率)"},
+	"Enhance 1 card with Stone (+50 Chips, no rank)": {"中文": "为1张牌添加石头 (+50筹码，无点数)"},
+	"Enhance 1 card with Gold ($3 when held)": {"中文": "为1张牌添加金箔 (持有时+$3)"},
+
+	## ----- Voucher 系统 -----
+	"VOUCHER": {"中文": "优惠券"},
+	"Voucher": {"中文": "优惠券"},
+
+	## ----- Voucher 名称 -----
+	"Overstock": {"中文": "库存过剩"},
+	"Clearance Sale": {"中文": "清仓大甩卖"},
+	"Hone": {"中文": "磨砺"},
+	"Reroll Surplus": {"中文": "刷新盈余"},
+	"Crystal Ball": {"中文": "水晶球"},
+	"Telescope": {"中文": "望远镜"},
+	"Grabber": {"中文": "抓取者"},
+	"Wasteful": {"中文": "挥霍者"},
+
+	## ----- Voucher 描述 -----
+	"+1 Joker slot": {"中文": "+1小丑栏位"},
+	"10% discount on shop items": {"中文": "商店物品打9折"},
+	"+1 Hand per round": {"中文": "每回合+1手牌"},
+	"-$2 Reroll cost": {"中文": "刷新费用-$2"},
+	"+1 Consumable slot": {"中文": "+1消耗品栏位"},
+	"Interest cap raised to $10": {"中文": "利息上限提升至$10"},
+	"+1 Hand per round (stacks)": {"中文": "每回合+1手牌(可叠加)"},
+	"+1 Discard per round": {"中文": "每回合+1弃牌"},
+
+	## ----- TAB 状态面板 -----
+	"Game Status": {"中文": "本局状态"},
+	"Run Status": {"中文": "本局状态"},
+	"Owned Vouchers": {"中文": "已拥有优惠券"},
+	"None": {"中文": "无"},
+	"Deck Tracker": {"中文": "牌库追踪"},
+	"Played": {"中文": "已出"},
+	"Remaining": {"中文": "剩余"},
+
+	## ----- 右键出售 -----
+	"Right click to sell": {"中文": "右键出售"},
 
 	## ===== 塔罗牌名称 =====
 	"The Fool": {"中文": "愚者"},

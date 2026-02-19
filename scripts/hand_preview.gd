@@ -1,5 +1,5 @@
 ## hand_preview.gd
-## 手牌预览提示 V5 - 显示等级信息
+## 手牌预览提示 V6 - 取消打牌升级显示（升级仅通过星球牌）
 extends Node2D
 
 var type_label: Label
@@ -47,20 +47,19 @@ func _setup_panel() -> void:
 	_f(level_info_label)
 	add_child(level_info_label)
 
-	## Chips
+	## Chips + Mult（合为一行居中显示）
 	preview_chips = Label.new()
-	preview_chips.position = Vector2(-PANEL_WIDTH / 2 + 25, -PANEL_HEIGHT / 2 + 68)
+	preview_chips.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 68)
+	preview_chips.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
+	preview_chips.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	preview_chips.add_theme_font_size_override("font_size", 18)
 	preview_chips.add_theme_color_override("font_color", Color(0.4, 0.65, 0.95))
 	_f(preview_chips)
 	add_child(preview_chips)
 
-	## Mult
+	## Mult（隐藏，数据通过 preview_chips 合并显示）
 	preview_mult = Label.new()
-	preview_mult.position = Vector2(-PANEL_WIDTH / 2 + 170, -PANEL_HEIGHT / 2 + 68)
-	preview_mult.add_theme_font_size_override("font_size", 18)
-	preview_mult.add_theme_color_override("font_color", Color(0.95, 0.4, 0.35))
-	_f(preview_mult)
+	preview_mult.visible = false
 	add_child(preview_mult)
 
 	## 预计总分
@@ -83,16 +82,11 @@ func update_preview(result: Dictionary) -> void:
 	visible = true
 	type_label.text = Loc.i().t(result["hand_name"])
 
-	## 等级信息
+	## 等级信息（只显示等级，不再显示"X次后升级"）
 	var level = result.get("level", 1)
-	var level_info = HandLevel.get_level_info(result["hand_type"])
-	if level > 1:
-		level_info_label.text = "Lv." + str(level) + " · " + str(level_info["plays_to_next"]) + " " + Loc.i().t("plays to next level")
-	else:
-		level_info_label.text = "Lv.1 · " + str(level_info["plays_to_next"]) + " " + Loc.i().t("plays to next level")
+	level_info_label.text = "Lv." + str(level)
 
-	preview_chips.text = Loc.i().t("Chips") + ": " + str(result["total_chips"])
-	preview_mult.text = "×" + str(result["total_mult"])
+	preview_chips.text = Loc.i().t("Chips") + ": " + str(result["total_chips"]) + "     ×" + str(result["total_mult"])
 	preview_score.text = str(result["total_chips"]) + " × " + str(result["total_mult"]) + " = " + str(result["final_score"])
 
 func hide_preview() -> void:

@@ -29,15 +29,13 @@ static func record_play(hand_type: PokerHand.HandType) -> Dictionary:
 		reset()
 	play_counts[hand_type] = play_counts.get(hand_type, 0) + 1
 	var count = play_counts[hand_type]
-	var old_level = levels.get(hand_type, 1)
-	var new_level = 1 + int(count / PLAYS_PER_LEVEL)
-	var leveled_up = new_level > old_level
-	levels[hand_type] = new_level
+	var current_level = levels.get(hand_type, 1)
+	## 不再自动升级，升级只通过星球牌
 	return {
-		"leveled_up": leveled_up,
-		"level": new_level,
+		"leveled_up": false,
+		"level": current_level,
 		"plays": count,
-		"plays_to_next": PLAYS_PER_LEVEL - (count % PLAYS_PER_LEVEL),
+		"plays_to_next": 0,
 	}
 
 ## 星球牌升级：直接增加对应牌型的等级和加成
@@ -66,19 +64,13 @@ static func get_level_info(hand_type: PokerHand.HandType) -> Dictionary:
 		"bonus_mult": get_bonus(hand_type)["mult"],
 	}
 
-## 总加成 = 打牌升级加成 + 星球牌加成
+## 总加成 = 仅星球牌加成（打牌不再自动升级）
 static func get_bonus(hand_type: PokerHand.HandType) -> Dictionary:
 	if levels.is_empty():
 		reset()
-	var level = levels.get(hand_type, 1)
-	var base_chips = (level - 1) * CHIPS_PER_LEVEL
-	var base_mult = (level - 1) * MULT_PER_LEVEL
-	## 星球牌加成已经包含在 level 提升中，所以这里只用 level 计算
-	## 但星球牌每级给的数值比打牌升级更高，所以用混合计算
-	## 实际实现：play升级给固定值，planet额外加成独立累加
 	var extra_chips = planet_bonus_chips.get(hand_type, 0)
 	var extra_mult = planet_bonus_mult.get(hand_type, 0)
 	return {
-		"chips": base_chips + extra_chips,
-		"mult": base_mult + extra_mult,
+		"chips": extra_chips,
+		"mult": extra_mult,
 	}

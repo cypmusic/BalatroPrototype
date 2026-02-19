@@ -18,11 +18,11 @@ const CENTER_Y: float = DESIGN_HEIGHT / 2.0
 const JOKER_Y: float = 175.0
 const JOKER_INFO_Y: float = 275.0
 const PREVIEW_Y: float = 420.0
-const HAND_Y: float = 640.0
-const BUTTON_Y: float = 880.0
-const PILE_Y: float = 930.0
-const DRAW_PILE_POS: Vector2 = Vector2(1780.0, 930.0)
-const DISCARD_PILE_POS: Vector2 = Vector2(140.0, 930.0)
+const HAND_Y: float = 750.0
+const BUTTON_Y: float = 920.0
+const PILE_Y: float = 940.0
+const DRAW_PILE_POS: Vector2 = Vector2(1780.0, 940.0)
+const DISCARD_PILE_POS: Vector2 = Vector2(140.0, 940.0)
 
 ## ========== 游戏平衡性常量 ==========
 const MAX_ANTE: int = 8

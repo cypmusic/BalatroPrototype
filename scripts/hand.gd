@@ -4,7 +4,7 @@ extends Node2D
 
 signal hand_changed()
 
-const HAND_Y_POSITION: float = 640.0
+const HAND_Y_POSITION: float = 700.0
 const CARD_SPACING: float = 150.0
 const MAX_HAND_SIZE: int = 8
 

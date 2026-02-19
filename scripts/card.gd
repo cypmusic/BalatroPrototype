@@ -21,7 +21,7 @@ var is_exiting: bool = false  ## 退场动画中
 const CARD_WIDTH: float = 140.0
 const CARD_HEIGHT: float = 195.0
 const HOVER_OFFSET: float = -35.0
-const SELECT_OFFSET: float = -55.0
+const SELECT_OFFSET: float = -35.0
 
 var base_position: Vector2 = Vector2.ZERO
 var target_position: Vector2 = Vector2.ZERO
