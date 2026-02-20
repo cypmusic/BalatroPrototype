@@ -859,13 +859,13 @@ func _use_consumable_in_shop(index: int) -> void:
 				var old_money = money
 				money += gain
 				_start_money_anim(old_money, money)
-				shop_info_label.text = "🔮 " + _l.t(tarot.tarot_name) + "! +$" + str(gain)
+				shop_info_label.text = "💰 " + _l.t(tarot.tarot_name) + "! +$" + str(gain)
 				shop_info_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.2))
-			TarotData.TarotEffect.SPAWN_TAROT:
+			TarotData.TarotEffect.GENERATE_ARTIFACTS:
 				var empty = consumable_slot_ref.get_empty_slots()
 				var to_add = mini(2, empty)
 				if to_add <= 0:
-					shop_info_label.text = "🌎 " + _l.t("No empty slots!")
+					shop_info_label.text = "🔮 " + _l.t("No empty slots!")
 					shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
 				else:
 					var new_tarots = TarotDatabase.get_random_tarots(to_add)
@@ -873,13 +873,13 @@ func _use_consumable_in_shop(index: int) -> void:
 					for t in new_tarots:
 						consumable_slot_ref.add_tarot(t)
 						names.append(_l.t(t.tarot_name))
-					shop_info_label.text = "🌎 " + _l.t("Created") + " " + ", ".join(names) + "!"
+					shop_info_label.text = "🔮 " + _l.t("Created") + " " + ", ".join(names) + "!"
 					shop_info_label.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-			TarotData.TarotEffect.SPAWN_PLANET:
+			TarotData.TarotEffect.GENERATE_CONSTELLATIONS:
 				var empty = consumable_slot_ref.get_empty_slots()
 				var to_add = mini(2, empty)
 				if to_add <= 0:
-					shop_info_label.text = "☀️ " + _l.t("No empty slots!")
+					shop_info_label.text = "⭐ " + _l.t("No empty slots!")
 					shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
 				else:
 					var new_planets = PlanetDatabase.get_random_planets(to_add)
@@ -887,9 +887,9 @@ func _use_consumable_in_shop(index: int) -> void:
 					for p in new_planets:
 						consumable_slot_ref.add_planet(p)
 						names.append(_l.t(p.planet_name))
-					shop_info_label.text = "☀️ " + _l.t("Created") + " " + ", ".join(names) + "!"
+					shop_info_label.text = "⭐ " + _l.t("Created") + " " + ", ".join(names) + "!"
 					shop_info_label.add_theme_color_override("font_color", Color(0.2, 0.6, 0.95))
-			TarotData.TarotEffect.RANDOM_LEVEL_UP:
+			TarotData.TarotEffect.LEVEL_UP_HAND_TYPE:
 				var types = PokerHand.HandType.values()
 				var random_type = types[randi() % types.size()]
 				HandLevel.planet_level_up(random_type, 20, 2)
@@ -898,8 +898,12 @@ func _use_consumable_in_shop(index: int) -> void:
 				var lvl = HandLevel.get_level_info(random_type)["level"]
 				shop_info_label.text = "🎰 " + _l.t(hname) + " → Lv." + str(lvl) + "!"
 				shop_info_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.2))
+			TarotData.TarotEffect.ADD_DISCARDS:
+				GameState.discards_remaining += 3
+				shop_info_label.text = "🌊 " + _l.t(tarot.tarot_name) + "! +3 " + _l.t("Discards")
+				shop_info_label.add_theme_color_override("font_color", Color(0.85, 0.25, 0.25))
 			_:
-				shop_info_label.text = "⚠ " + _l.t("Use tarots during gameplay!")
+				shop_info_label.text = "⚠ " + _l.t("Use artifacts during gameplay!")
 				shop_info_label.add_theme_color_override("font_color", Color(0.9, 0.6, 0.2))
 				return
 		_spawn_glow_particles(CENTER_X + CENTER_X / 2.0, OWNED_Y, Color(0.7, 0.35, 0.75))

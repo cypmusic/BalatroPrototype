@@ -722,8 +722,8 @@ func _on_planet_used(planet: PlanetData) -> void:
 
 func _on_tarot_used(tarot: TarotData) -> void:
 	var selected = hand.get_selected_cards()
-	## 处理增强塔罗牌（直接在 main 中处理，因为需要修改 card_data）
-	if tarot.effect == TarotData.TarotEffect.ADD_FOIL:
+	## 处理增强法宝牌（直接在 main 中处理，因为需要修改 card_data）
+	if tarot.effect == TarotData.TarotEffect.ADD_ENHANCEMENT_FOIL:
 		if selected.size() >= 1:
 			selected[0].card_data.enhancement = CardData.Enhancement.FOIL
 			selected[0].is_selected = false
@@ -732,7 +732,7 @@ func _on_tarot_used(tarot: TarotData) -> void:
 			info_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 		_update_preview()
 		return
-	if tarot.effect == TarotData.TarotEffect.ADD_HOLOGRAPHIC:
+	if tarot.effect == TarotData.TarotEffect.ADD_ENHANCEMENT_HOLO:
 		if selected.size() >= 1:
 			selected[0].card_data.enhancement = CardData.Enhancement.HOLOGRAPHIC
 			selected[0].is_selected = false
@@ -741,7 +741,7 @@ func _on_tarot_used(tarot: TarotData) -> void:
 			info_label.add_theme_color_override("font_color", Color(0.8, 0.5, 1.0))
 		_update_preview()
 		return
-	if tarot.effect == TarotData.TarotEffect.ADD_POLYCHROME:
+	if tarot.effect == TarotData.TarotEffect.ADD_ENHANCEMENT_POLY:
 		if selected.size() >= 1:
 			selected[0].card_data.enhancement = CardData.Enhancement.POLYCHROME
 			selected[0].is_selected = false
