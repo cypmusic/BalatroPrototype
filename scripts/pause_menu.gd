@@ -1,5 +1,5 @@
 ## pause_menu.gd
-## 暂停/标题菜单 V7 - 紧凑网格 + 四象边框分区 + 语言自适应遮罩
+## 暂停/标题菜单 V8 - 统一面板定位 + 垂直两端对齐 + 子面板自适应
 extends Node2D
 
 signal resume_game()
@@ -20,7 +20,11 @@ const BTN_W: float = 720.0
 const BTN_H: float = 104.0
 const BTN_SPACING: float = 128.0
 
-## 收藏页大面板常量 (缩小面板 + 紧凑排列)
+## Title 模式面板 (较小，靠下)
+const TITLE_PANEL_H: float = 960.0
+const TITLE_PANEL_BOTTOM_MARGIN: float = 120.0
+
+## 收藏页大面板常量
 const COLL_W: float = 3000.0
 const COLL_H: float = 1700.0
 const TOOLTIP_W: float = 640.0
@@ -102,17 +106,31 @@ func _make_button(text: String, pos: Vector2, font_size: int,
 	btn.pressed.connect(callback)
 	return btn
 
+## 获取当前模式下菜单面板的矩形区域
+func _get_panel_rect() -> Rect2:
+	if mode == MenuMode.PAUSE:
+		return Rect2(
+			CENTER_X - MENU_W / 2.0,
+			CENTER_Y - MENU_H / 2.0,
+			MENU_W, MENU_H)
+	else:
+		var py = SCREEN_H - TITLE_PANEL_H - TITLE_PANEL_BOTTOM_MARGIN
+		return Rect2(
+			CENTER_X - MENU_W / 2.0,
+			py, MENU_W, TITLE_PANEL_H)
+
 ## ========== 主菜单 ==========
 
 func _build_main_menu() -> void:
 	_clear(); current_panel = SubPanel.NONE; _add_bg()
+	var pr = _get_panel_rect()
 
 	if mode == MenuMode.PAUSE:
 		add_child(_make_label(_t("PAUSED"),
-			Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2 + 40),
-			84, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
+			Vector2(pr.position.x, pr.position.y + 40),
+			84, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
 		var line = ColorRect.new()
-		line.position = Vector2(CENTER_X - 240, CENTER_Y - MENU_H/2 + 156)
+		line.position = Vector2(CENTER_X - 240, pr.position.y + 156)
 		line.size = Vector2(480, 4)
 		line.color = Color(0.95, 0.85, 0.3, 0.4)
 		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -142,26 +160,23 @@ func _build_main_menu() -> void:
 			{"text": "✕  " + _t("Quit Game"), "callback": _on_quit},
 		]
 
-	## Title 模式：面板靠下，按钮相对面板顶部排列
-	var panel_top: float
-	var panel_bottom: float
+	## 按钮垂直居中在面板内
+	var btn_count = buttons.size()
+	var total_btn_h = btn_count * BTN_H + (btn_count - 1) * (BTN_SPACING - BTN_H)
+	var start_y: float
 	if mode == MenuMode.PAUSE:
-		panel_top = CENTER_Y - MENU_H / 2.0
-		panel_bottom = CENTER_Y + MENU_H / 2.0
+		start_y = pr.position.y + 220
 	else:
-		var title_panel_h = 960.0
-		panel_top = SCREEN_H - title_panel_h - 120.0
-		panel_bottom = panel_top + title_panel_h
+		start_y = pr.position.y + (pr.size.y - total_btn_h) / 2.0
 
-	var start_y = panel_top + (220 if mode == MenuMode.PAUSE else 60)
-	for i in range(buttons.size()):
+	for i in range(btn_count):
 		add_child(_make_button(buttons[i]["text"],
 			Vector2(CENTER_X - BTN_W/2, start_y + i * BTN_SPACING),
 			44, BTN_W, BTN_H, buttons[i]["callback"]))
 
 	add_child(_make_label(GameConfig.VERSION_LABEL,
-		Vector2(CENTER_X - MENU_W/2, panel_bottom - 80),
-		24, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
+		Vector2(pr.position.x, pr.position.y + pr.size.y - 80),
+		24, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
 
 func _on_continue() -> void:
 	visible = false; continue_game.emit()
@@ -179,40 +194,49 @@ func _on_return_to_title() -> void:
 
 func _open_settings() -> void:
 	_clear(); current_panel = SubPanel.SETTINGS; _add_bg()
-	_add_sub_header(_t("SETTINGS"))
+	var pr = _get_panel_rect()
+	_add_sub_header(_t("SETTINGS"), pr)
 
-	var start_y = CENTER_Y - MENU_H/2 + 260
+	## 内容区域：标题下方到返回按钮上方
+	var content_top = pr.position.y + 200
+	var content_bottom = pr.position.y + pr.size.y - 160
+	var content_h = content_bottom - content_top
+
 	var cats = [
 		{"label": _t("Master Volume"), "value": master_volume},
 		{"label": _t("SFX Volume"), "value": sfx_volume},
 		{"label": _t("Music Volume"), "value": music_volume},
 	]
+	## 5 个项目：3个音量 + 语言 + 图形提示
+	var item_count = 5
+	var item_spacing = content_h / item_count
+
 	for ci in range(cats.size()):
-		var y = start_y + ci * 160
+		var y = content_top + ci * item_spacing
 		add_child(_make_label(cats[ci]["label"], Vector2(CENTER_X - 360, y), 36, Color(0.85, 0.85, 0.8)))
 
 		var slider = HSlider.new()
 		slider.min_value = 0.0; slider.max_value = 1.0; slider.step = 0.05
 		slider.value = cats[ci]["value"]
-		slider.position = Vector2(CENTER_X - 360, y + 56)
+		slider.position = Vector2(CENTER_X - 360, y + 50)
 		slider.custom_minimum_size = Vector2(720, 40)
 		var idx = ci
 		slider.value_changed.connect(func(v): _on_volume_changed(idx, v))
 		add_child(slider)
 
 		var val_lbl = _make_label(str(int(cats[ci]["value"] * 100)) + "%",
-			Vector2(CENTER_X + 400, y + 50), 32, Color(0.95, 0.85, 0.3))
+			Vector2(CENTER_X + 400, y + 44), 32, Color(0.95, 0.85, 0.3))
 		val_lbl.name = "VolLabel" + str(ci)
 		add_child(val_lbl)
 
-	var lang_y = start_y + 3 * 160
+	var lang_y = content_top + 3 * item_spacing
 	add_child(_make_label(_t("Language"), Vector2(CENTER_X - 360, lang_y), 36, Color(0.85, 0.85, 0.8)))
 	add_child(_make_button("  " + _loc().current_language + "  ▼",
-		Vector2(CENTER_X - 360, lang_y + 56), 32, 400, 72, _cycle_language))
+		Vector2(CENTER_X - 360, lang_y + 50), 32, 400, 72, _cycle_language))
 
 	add_child(_make_label(_t("Graphics settings coming soon..."),
-		Vector2(CENTER_X - 360, start_y + 4 * 160), 28, Color(0.5, 0.5, 0.45)))
-	_add_back_button()
+		Vector2(CENTER_X - 360, content_top + 4 * item_spacing), 28, Color(0.5, 0.5, 0.45)))
+	_add_back_button(pr)
 
 func _on_volume_changed(index: int, value: float) -> void:
 	match index:
@@ -299,17 +323,18 @@ func _open_collection() -> void:
 		add_child(btn)
 
 	## — 网格内容区域（无滚动）—
-	var content_top = tab_y + 80
+	var content_top = tab_y + 84
+	var content_bottom = CENTER_Y + COLL_H / 2.0 - 110  ## 返回按钮上方
 	var content_left = panel_left + 40
 	var content_w = COLL_W - 80
 
 	match coll_tab:
 		CollTab.BEASTS:
-			_fill_beast_grid(content_left, content_top, content_w)
+			_fill_beast_grid(content_left, content_top, content_w, content_bottom)
 		CollTab.CONSTELLATIONS:
-			_fill_constellation_grid(content_left, content_top, content_w)
+			_fill_constellation_grid(content_left, content_top, content_w, content_bottom)
 		CollTab.ARTIFACTS:
-			_fill_artifact_grid(content_left, content_top, content_w)
+			_fill_artifact_grid(content_left, content_top, content_w, content_bottom)
 
 	_add_coll_back_button()
 
@@ -362,9 +387,9 @@ func _add_coll_back_button() -> void:
 		Vector2(CENTER_X - 180, by), 36, 360, 80,
 		func(): _build_main_menu()))
 
-## ---------- 异兽网格 ----------
+## ---------- 异兽网格 (垂直两端对齐) ----------
 
-func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
+func _fill_beast_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> void:
 	var all_jokers = JokerDatabase.get_all_jokers()
 
 	## 按四象分组
@@ -387,11 +412,8 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 
 	var cols = 9
 	var cell_w = total_w / cols
-	var cell_h = 46.0
-	var group_gap = 16.0  ## 四象组间距
-	var cur_y = y0
-	var box_pad = 10.0    ## 边框内边距
 	var hdr_h = 44.0      ## 四象标题行高度
+	var box_pad = 10.0    ## 边框内边距
 
 	var sx_order = [
 		CardLore.SiXiang.AZURE_DRAGON,
@@ -399,6 +421,23 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 		CardLore.SiXiang.WHITE_TIGER,
 		CardLore.SiXiang.BLACK_TORTOISE,
 	]
+
+	## 先计算总需求高度，然后按比例分配间距
+	var total_rows = 0
+	for sx in sx_order:
+		total_rows += ceili(float(sx_groups[sx].size()) / cols)
+	## 4组标题 + 所有数据行 的最小高度
+	var min_cell_h = 46.0
+	var min_content_h = 4 * (hdr_h + box_pad * 2) + total_rows * min_cell_h
+	var available_h = y_bottom - y0
+	## 计算实际 cell_h 和 group_gap 来填满可用空间
+	var group_gap = 20.0
+	var total_fixed = 4 * (hdr_h + box_pad * 2) + 3 * group_gap  ## 4个标题区 + 3个间距
+	var remaining = available_h - total_fixed
+	var cell_h = remaining / total_rows if total_rows > 0 else min_cell_h
+	cell_h = maxf(cell_h, min_cell_h)
+
+	var cur_y = y0
 
 	for sx in sx_order:
 		var info = CardLore.get_si_xiang_info(sx)
@@ -412,7 +451,7 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 
 		## 四象标题（居中 + 放大字体）
 		var hdr_text = info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]) + " " + info["suit_cn"]
-		var hdr = _make_label(hdr_text, Vector2(x0 - box_pad, cur_y + 4), 30, info["color"],
+		var hdr = _make_label(hdr_text, Vector2(x0 - box_pad, cur_y + 4), 32, info["color"],
 			HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2)
 		add_child(hdr)
 		cur_y += hdr_h
@@ -441,9 +480,9 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 
 		cur_y += row_count * cell_h + box_pad + group_gap
 
-## ---------- 星宿网格 ----------
+## ---------- 星宿网格 (垂直两端对齐) ----------
 
-func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
+func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> void:
 	var all_planets = PlanetDatabase.get_all_planets()
 
 	## 数据库顺序：青龙7 + 玄武7 + 白虎7 + 朱雀7
@@ -457,15 +496,23 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
 	var cols = 7
 	var label_w = 260.0   ## 左侧四象标签宽度
 	var cell_w = (total_w - label_w) / cols
-	var row_h = 52.0
-	var group_gap = 16.0
-	var box_pad = 10.0
+	var box_pad = 12.0
+
+	## 计算垂直两端对齐：4组，均匀分布
+	var group_count = sx_map.size()
+	var available_h = y_bottom - y0
+	## 每组高度 = 可用高度 / 组数（包含间距）
+	var group_total_h = available_h / group_count
+	var row_h = group_total_h - box_pad * 2 - 8  ## 留出边框内边距和间距
+	row_h = maxf(row_h, 60.0)
+	var box_h = row_h + box_pad * 2
+
 	var cur_y = y0
 
-	for group in sx_map:
+	for gi in range(group_count):
+		var group = sx_map[gi]
 		var info = CardLore.get_si_xiang_info(group["sx"])
 		var border_color = Color(info["color"], 0.3)
-		var box_h = row_h + box_pad * 2
 
 		## ── 四象分组边框 ──
 		_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, box_h), border_color)
@@ -473,7 +520,7 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
 		## 四象标签（居中大字）
 		add_child(_make_label(
 			info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]),
-			Vector2(x0, cur_y + box_pad), 28, info["color"],
+			Vector2(x0, cur_y + box_pad), 30, info["color"],
 			HORIZONTAL_ALIGNMENT_CENTER, label_w))
 
 		## 该组7个星宿
@@ -486,9 +533,9 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
 			var lbl = Label.new()
 			lbl.text = planet.emoji + " " + _t(planet.planet_name)
 			lbl.position = Vector2(lx, cur_y + box_pad - 2)
-			lbl.custom_minimum_size = Vector2(cell_w - 8, row_h - 4)
+			lbl.custom_minimum_size = Vector2(cell_w - 8, row_h / 2.0)
 			lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.7))
-			_loc().apply_font_to_label(lbl, 24)
+			_loc().apply_font_to_label(lbl, 26)
 			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 			var p_ref = planet
 			var l_ref = lbl
@@ -499,17 +546,17 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
 			## 牌型名 (第二行)
 			var sub = Label.new()
 			sub.text = "→ " + hand_name
-			sub.position = Vector2(lx + 16, cur_y + box_pad + 26)
+			sub.position = Vector2(lx + 16, cur_y + box_pad + 30)
 			sub.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
-			_loc().apply_font_to_label(sub, 18)
+			_loc().apply_font_to_label(sub, 20)
 			sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			add_child(sub)
 
-		cur_y += box_h + group_gap
+		cur_y += group_total_h
 
-## ---------- 法宝网格 ----------
+## ---------- 法宝网格 (垂直两端对齐) ----------
 
-func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
+func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> void:
 	var all_tarots = TarotDatabase.get_all_tarots()
 	var relics: Array = []
 	var formations: Array = []
@@ -519,21 +566,36 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 		else:
 			formations.append(t)
 
-	var cur_y = y0
-	var cell_h = 50.0
-	var box_pad = 10.0
+	var available_h = y_bottom - y0
+	var box_pad = 12.0
+	var gap_between = 30.0
 
-	## — 神器 (16张) 8列×2行 —
+	## 计算行数
 	var relic_cols = 8
-	var relic_cell_w = total_w / relic_cols
 	var relic_rows = ceili(float(relics.size()) / relic_cols)
-	var relic_box_h = 44.0 + relic_rows * cell_h + box_pad * 2
+	var form_cols = 5
+	var form_rows = ceili(float(formations.size()) / form_cols)
+
+	## 两个 section 按比例分配高度
+	var total_data_rows = relic_rows + form_rows
+	var fixed_h = 2 * (48.0 + box_pad * 2) + gap_between  ## 两个标题区 + 间距
+	var remaining_h = available_h - fixed_h
+	var cell_h = remaining_h / total_data_rows if total_data_rows > 0 else 54.0
+	cell_h = maxf(cell_h, 54.0)
+
+	var relic_cell_w = total_w / relic_cols
+	var form_cell_w = total_w / form_cols
+
+	var cur_y = y0
+
+	## — 神器 —
+	var relic_box_h = 48.0 + relic_rows * cell_h + box_pad * 2
 	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, relic_box_h), Color(0.7, 0.35, 0.75, 0.3))
 
 	add_child(_make_label("⚱️ " + _t("Relics") + " (" + str(relics.size()) + ")",
-		Vector2(x0 - box_pad, cur_y + 6), 30, Color(0.7, 0.35, 0.75),
+		Vector2(x0 - box_pad, cur_y + 8), 32, Color(0.7, 0.35, 0.75),
 		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
-	cur_y += 44
+	cur_y += 48
 
 	for i in range(relics.size()):
 		var tarot = relics[i]
@@ -546,7 +608,7 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 		lbl.position = Vector2(lx, ly)
 		lbl.custom_minimum_size = Vector2(relic_cell_w - 8, cell_h - 4)
 		lbl.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-		_loc().apply_font_to_label(lbl, 24)
+		_loc().apply_font_to_label(lbl, 26)
 		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 		var t_ref = tarot
 		var l_ref = lbl
@@ -554,19 +616,16 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 		lbl.mouse_exited.connect(func(): _hide_card_tooltip())
 		add_child(lbl)
 
-	cur_y += relic_rows * cell_h + box_pad + 20
+	cur_y += relic_rows * cell_h + box_pad + gap_between
 
-	## — 阵法 (10张) 5列×2行 —
-	var form_cols = 5
-	var form_cell_w = total_w / form_cols
-	var form_rows = ceili(float(formations.size()) / form_cols)
-	var form_box_h = 44.0 + form_rows * cell_h + box_pad * 2
+	## — 阵法 —
+	var form_box_h = 48.0 + form_rows * cell_h + box_pad * 2
 	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, form_box_h), Color(0.85, 0.25, 0.25, 0.3))
 
 	add_child(_make_label("⚔️ " + _t("Formations") + " (" + str(formations.size()) + ")",
-		Vector2(x0 - box_pad, cur_y + 6), 30, Color(0.85, 0.25, 0.25),
+		Vector2(x0 - box_pad, cur_y + 8), 32, Color(0.85, 0.25, 0.25),
 		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
-	cur_y += 44
+	cur_y += 48
 
 	for i in range(formations.size()):
 		var tarot = formations[i]
@@ -579,7 +638,7 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 		lbl.position = Vector2(lx, ly)
 		lbl.custom_minimum_size = Vector2(form_cell_w - 8, cell_h - 4)
 		lbl.add_theme_color_override("font_color", Color(0.85, 0.25, 0.25))
-		_loc().apply_font_to_label(lbl, 24)
+		_loc().apply_font_to_label(lbl, 26)
 		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 		var t_ref = tarot
 		var l_ref = lbl
@@ -786,8 +845,13 @@ func _show_artifact_tooltip(tarot: TarotData, anchor: Label) -> void:
 
 func _open_tutorial() -> void:
 	_clear(); current_panel = SubPanel.TUTORIAL; _add_bg()
-	_add_sub_header(_t("HOW TO PLAY"))
-	var sy = CENTER_Y - MENU_H/2 + 260
+	var pr = _get_panel_rect()
+	_add_sub_header(_t("HOW TO PLAY"), pr)
+
+	var content_top = pr.position.y + 200
+	var content_bottom = pr.position.y + pr.size.y - 160
+	var content_h = content_bottom - content_top
+
 	var tuts = [
 		["🎯 " + _t("Goal"), _t("Reach the target score before running out of hands.")],
 		["🃏 " + _t("Hands"), _t("Select up to 6 cards to play poker hands.")],
@@ -800,11 +864,12 @@ func _open_tutorial() -> void:
 		["⚔️ " + _t("Blinds"), _t("Small → Big → Boss. Skip for rewards.")],
 		["🏆 " + _t("Victory"), _t("Clear all 8 Antes to win!")],
 	]
+	var item_spacing = content_h / tuts.size()
 	for i in range(tuts.size()):
-		var y = sy + i * 96
+		var y = content_top + i * item_spacing
 		add_child(_make_label(tuts[i][0], Vector2(CENTER_X - 440, y), 32, Color(0.95, 0.85, 0.3)))
-		add_child(_make_label(tuts[i][1], Vector2(CENTER_X - 440, y + 44), 24, Color(0.65, 0.65, 0.6)))
-	_add_back_button()
+		add_child(_make_label(tuts[i][1], Vector2(CENTER_X - 440, y + 40), 24, Color(0.65, 0.65, 0.6)))
+	_add_back_button(pr)
 
 func _on_quit() -> void:
 	get_tree().paused = false; get_tree().quit()
@@ -843,41 +908,38 @@ func _add_bg() -> void:
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
 
-	## Title 模式用更小面板，下移避开标题；Pause 模式居中大面板
-	var p_w = MENU_W
-	var p_h = MENU_H if mode == MenuMode.PAUSE else 960.0
-	var p_x = CENTER_X - p_w / 2.0
-	var p_y = CENTER_Y - p_h / 2.0 if mode == MenuMode.PAUSE else SCREEN_H - p_h - 120.0
-
+	var pr = _get_panel_rect()
 	var panel = ColorRect.new()
-	panel.position = Vector2(p_x, p_y)
-	panel.size = Vector2(p_w, p_h)
+	panel.position = pr.position
+	panel.size = pr.size
 	panel.color = Color(0.06, 0.09, 0.07, 0.92)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 
 	var bw = 4.0; var bc = Color(0.95, 0.85, 0.3, 0.3)
 	for edge in [
-		[Vector2(p_x, p_y), Vector2(p_w, bw)],
-		[Vector2(p_x, p_y + p_h - bw), Vector2(p_w, bw)],
-		[Vector2(p_x, p_y), Vector2(bw, p_h)],
-		[Vector2(p_x + p_w - bw, p_y), Vector2(bw, p_h)],
+		[Vector2(pr.position.x, pr.position.y), Vector2(pr.size.x, bw)],
+		[Vector2(pr.position.x, pr.position.y + pr.size.y - bw), Vector2(pr.size.x, bw)],
+		[Vector2(pr.position.x, pr.position.y), Vector2(bw, pr.size.y)],
+		[Vector2(pr.position.x + pr.size.x - bw, pr.position.y), Vector2(bw, pr.size.y)],
 	]:
 		var border = ColorRect.new()
 		border.position = edge[0]; border.size = edge[1]; border.color = bc
 		border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(border)
 
-func _add_sub_header(text: String) -> void:
-	add_child(_make_label(text, Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2 + 40),
-		72, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
+## 子面板标题（自适应面板位置）
+func _add_sub_header(text: String, pr: Rect2) -> void:
+	add_child(_make_label(text, Vector2(pr.position.x, pr.position.y + 40),
+		72, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
 	var line = ColorRect.new()
-	line.position = Vector2(CENTER_X - 200, CENTER_Y - MENU_H/2 + 136)
+	line.position = Vector2(CENTER_X - 200, pr.position.y + 136)
 	line.size = Vector2(400, 4); line.color = Color(0.95, 0.85, 0.3, 0.3)
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(line)
 
-func _add_back_button() -> void:
+## 返回按钮（自适应面板位置）
+func _add_back_button(pr: Rect2) -> void:
 	add_child(_make_button("  ← " + _t("Back") + "  ",
-		Vector2(CENTER_X - 160, CENTER_Y + MENU_H/2 - 120), 36, 320, 84,
+		Vector2(CENTER_X - 160, pr.position.y + pr.size.y - 120), 36, 320, 84,
 		func(): _build_main_menu()))
