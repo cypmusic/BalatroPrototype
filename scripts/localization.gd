@@ -4,7 +4,7 @@
 extends RefCounted
 class_name Loc
 
-const CN_FONT_PATH: String = "res://assets/fonts/ark-pixel-10px-monospaced-zh_cn.ttf"
+const CN_FONT_PATH: String = "res://assets/fonts/zpix.ttf"
 
 static var _instance: Loc = null
 
