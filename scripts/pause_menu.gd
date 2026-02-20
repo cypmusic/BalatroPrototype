@@ -1,5 +1,5 @@
 ## pause_menu.gd
-## 暂停/标题菜单 V6 - 收藏页全屏网格 + 悬停遮罩
+## 暂停/标题菜单 V7 - 紧凑网格 + 四象边框分区 + 语言自适应遮罩
 extends Node2D
 
 signal resume_game()
@@ -20,9 +20,9 @@ const BTN_W: float = 720.0
 const BTN_H: float = 104.0
 const BTN_SPACING: float = 128.0
 
-## 收藏页大面板常量
-const COLL_W: float = 3400.0
-const COLL_H: float = 1900.0
+## 收藏页大面板常量 (缩小面板 + 紧凑排列)
+const COLL_W: float = 3000.0
+const COLL_H: float = 1700.0
 const TOOLTIP_W: float = 640.0
 
 enum MenuMode { TITLE, PAUSE }
@@ -142,14 +142,25 @@ func _build_main_menu() -> void:
 			{"text": "✕  " + _t("Quit Game"), "callback": _on_quit},
 		]
 
-	var start_y = CENTER_Y - MENU_H/2 + (220 if mode == MenuMode.PAUSE else 120)
+	## Title 模式：面板靠下，按钮相对面板顶部排列
+	var panel_top: float
+	var panel_bottom: float
+	if mode == MenuMode.PAUSE:
+		panel_top = CENTER_Y - MENU_H / 2.0
+		panel_bottom = CENTER_Y + MENU_H / 2.0
+	else:
+		var title_panel_h = 960.0
+		panel_top = SCREEN_H - title_panel_h - 120.0
+		panel_bottom = panel_top + title_panel_h
+
+	var start_y = panel_top + (220 if mode == MenuMode.PAUSE else 60)
 	for i in range(buttons.size()):
 		add_child(_make_button(buttons[i]["text"],
 			Vector2(CENTER_X - BTN_W/2, start_y + i * BTN_SPACING),
 			44, BTN_W, BTN_H, buttons[i]["callback"]))
 
 	add_child(_make_label(GameConfig.VERSION_LABEL,
-		Vector2(CENTER_X - MENU_W/2, CENTER_Y + MENU_H/2 - 80),
+		Vector2(CENTER_X - MENU_W/2, panel_bottom - 80),
 		24, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
 
 func _on_continue() -> void:
@@ -376,9 +387,11 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 
 	var cols = 9
 	var cell_w = total_w / cols
-	var cell_h = 42.0
-	var group_gap = 12.0  ## 四象组间距
+	var cell_h = 46.0
+	var group_gap = 16.0  ## 四象组间距
 	var cur_y = y0
+	var box_pad = 10.0    ## 边框内边距
+	var hdr_h = 44.0      ## 四象标题行高度
 
 	var sx_order = [
 		CardLore.SiXiang.AZURE_DRAGON,
@@ -390,13 +403,19 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 	for sx in sx_order:
 		var info = CardLore.get_si_xiang_info(sx)
 		var beasts = sx_groups[sx]
+		var row_count = ceili(float(beasts.size()) / cols)
+		var box_h = hdr_h + row_count * cell_h + box_pad * 2
+		var border_color = Color(info["color"], 0.35)
 
-		## 四象小标题
-		var hdr = _make_label(
-			info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]) + " " + info["suit_cn"],
-			Vector2(x0, cur_y), 24, info["color"])
+		## ── 四象分组边框 ──
+		_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, box_h), border_color)
+
+		## 四象标题（居中 + 放大字体）
+		var hdr_text = info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]) + " " + info["suit_cn"]
+		var hdr = _make_label(hdr_text, Vector2(x0 - box_pad, cur_y + 4), 30, info["color"],
+			HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2)
 		add_child(hdr)
-		cur_y += 34
+		cur_y += hdr_h
 
 		## 网格排列
 		for bi in range(beasts.size()):
@@ -412,7 +431,7 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 			lbl.position = Vector2(lx, ly)
 			lbl.custom_minimum_size = Vector2(cell_w - 8, cell_h - 4)
 			lbl.add_theme_color_override("font_color", c)
-			_loc().apply_font_to_label(lbl, 20)
+			_loc().apply_font_to_label(lbl, 24)
 			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 			var j_ref = joker
 			var l_ref = lbl
@@ -420,8 +439,7 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float) -> void:
 			lbl.mouse_exited.connect(func(): _hide_card_tooltip())
 			add_child(lbl)
 
-		var row_count = ceili(float(beasts.size()) / cols)
-		cur_y += row_count * cell_h + group_gap
+		cur_y += row_count * cell_h + box_pad + group_gap
 
 ## ---------- 星宿网格 ----------
 
@@ -439,16 +457,24 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
 	var cols = 7
 	var label_w = 260.0   ## 左侧四象标签宽度
 	var cell_w = (total_w - label_w) / cols
-	var row_h = 48.0
-	var group_gap = 20.0
+	var row_h = 52.0
+	var group_gap = 16.0
+	var box_pad = 10.0
 	var cur_y = y0
 
 	for group in sx_map:
 		var info = CardLore.get_si_xiang_info(group["sx"])
-		## 四象标签
+		var border_color = Color(info["color"], 0.3)
+		var box_h = row_h + box_pad * 2
+
+		## ── 四象分组边框 ──
+		_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, box_h), border_color)
+
+		## 四象标签（居中大字）
 		add_child(_make_label(
 			info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]),
-			Vector2(x0, cur_y + 6), 26, info["color"]))
+			Vector2(x0, cur_y + box_pad), 28, info["color"],
+			HORIZONTAL_ALIGNMENT_CENTER, label_w))
 
 		## 该组7个星宿
 		for ci in range(7):
@@ -459,10 +485,10 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
 			var lx = x0 + label_w + ci * cell_w
 			var lbl = Label.new()
 			lbl.text = planet.emoji + " " + _t(planet.planet_name)
-			lbl.position = Vector2(lx, cur_y)
+			lbl.position = Vector2(lx, cur_y + box_pad - 2)
 			lbl.custom_minimum_size = Vector2(cell_w - 8, row_h - 4)
 			lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.7))
-			_loc().apply_font_to_label(lbl, 20)
+			_loc().apply_font_to_label(lbl, 24)
 			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 			var p_ref = planet
 			var l_ref = lbl
@@ -473,13 +499,13 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float) -> void:
 			## 牌型名 (第二行)
 			var sub = Label.new()
 			sub.text = "→ " + hand_name
-			sub.position = Vector2(lx + 16, cur_y + 24)
+			sub.position = Vector2(lx + 16, cur_y + box_pad + 26)
 			sub.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
-			_loc().apply_font_to_label(sub, 16)
+			_loc().apply_font_to_label(sub, 18)
 			sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			add_child(sub)
 
-		cur_y += row_h + group_gap
+		cur_y += box_h + group_gap
 
 ## ---------- 法宝网格 ----------
 
@@ -494,15 +520,21 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 			formations.append(t)
 
 	var cur_y = y0
+	var cell_h = 50.0
+	var box_pad = 10.0
 
 	## — 神器 (16张) 8列×2行 —
-	add_child(_make_label("⚱️ " + _t("Relics") + " (" + str(relics.size()) + ")",
-		Vector2(x0, cur_y), 28, Color(0.7, 0.35, 0.75)))
-	cur_y += 40
-
 	var relic_cols = 8
 	var relic_cell_w = total_w / relic_cols
-	var cell_h = 48.0
+	var relic_rows = ceili(float(relics.size()) / relic_cols)
+	var relic_box_h = 44.0 + relic_rows * cell_h + box_pad * 2
+	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, relic_box_h), Color(0.7, 0.35, 0.75, 0.3))
+
+	add_child(_make_label("⚱️ " + _t("Relics") + " (" + str(relics.size()) + ")",
+		Vector2(x0 - box_pad, cur_y + 6), 30, Color(0.7, 0.35, 0.75),
+		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
+	cur_y += 44
+
 	for i in range(relics.size()):
 		var tarot = relics[i]
 		var col = i % relic_cols
@@ -514,7 +546,7 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 		lbl.position = Vector2(lx, ly)
 		lbl.custom_minimum_size = Vector2(relic_cell_w - 8, cell_h - 4)
 		lbl.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-		_loc().apply_font_to_label(lbl, 20)
+		_loc().apply_font_to_label(lbl, 24)
 		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 		var t_ref = tarot
 		var l_ref = lbl
@@ -522,15 +554,20 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 		lbl.mouse_exited.connect(func(): _hide_card_tooltip())
 		add_child(lbl)
 
-	cur_y += ceili(float(relics.size()) / relic_cols) * cell_h + 30
+	cur_y += relic_rows * cell_h + box_pad + 20
 
 	## — 阵法 (10张) 5列×2行 —
-	add_child(_make_label("⚔️ " + _t("Formations") + " (" + str(formations.size()) + ")",
-		Vector2(x0, cur_y), 28, Color(0.85, 0.25, 0.25)))
-	cur_y += 40
-
 	var form_cols = 5
 	var form_cell_w = total_w / form_cols
+	var form_rows = ceili(float(formations.size()) / form_cols)
+	var form_box_h = 44.0 + form_rows * cell_h + box_pad * 2
+	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, form_box_h), Color(0.85, 0.25, 0.25, 0.3))
+
+	add_child(_make_label("⚔️ " + _t("Formations") + " (" + str(formations.size()) + ")",
+		Vector2(x0 - box_pad, cur_y + 6), 30, Color(0.85, 0.25, 0.25),
+		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
+	cur_y += 44
+
 	for i in range(formations.size()):
 		var tarot = formations[i]
 		var col = i % form_cols
@@ -542,7 +579,7 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float) -> void:
 		lbl.position = Vector2(lx, ly)
 		lbl.custom_minimum_size = Vector2(form_cell_w - 8, cell_h - 4)
 		lbl.add_theme_color_override("font_color", Color(0.85, 0.25, 0.25))
-		_loc().apply_font_to_label(lbl, 20)
+		_loc().apply_font_to_label(lbl, 24)
 		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 		var t_ref = tarot
 		var l_ref = lbl
@@ -663,6 +700,7 @@ func _show_beast_tooltip(joker: JokerData, anchor: Label) -> void:
 	var lore = CardLore.get_beast_lore(joker.id)
 	var sx_info = CardLore.get_si_xiang_info(lore["si_xiang"])
 	var lang = _loc().current_language
+	var is_cn = (lang == "中文")
 
 	var rarity_names = {0: "Common", 1: "Uncommon", 2: "Rare", 3: "Legendary"}
 	var rarity_colors = {
@@ -674,21 +712,18 @@ func _show_beast_tooltip(joker: JokerData, anchor: Label) -> void:
 	var cat_emoji = CardLore.get_category_emoji(lore["category"])
 	var cat_name = CardLore.get_category_name(lore["category"], lang)
 
-	var cn_name = _t(joker.joker_name)
-	var en_name = joker.joker_name
+	var display_name = _t(joker.joker_name)
 
 	var rows: Array = [
-		{"header": true, "value": joker.emoji + " " + cn_name, "color": rarity_colors.get(joker.rarity, Color.WHITE), "size": 28},
+		{"header": true, "value": joker.emoji + " " + display_name, "color": rarity_colors.get(joker.rarity, Color.WHITE), "size": 28},
 		{"divider": true},
-		{"label": _t("English Name"), "value": en_name},
-		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + sx_info["name_cn"] + sx_info["suit_cn"] + " (" + sx_info["element_cn"] + ")", "color": sx_info["color"]},
+		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] + " (" + sx_info["element_cn"] + ")" if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
 		{"label": _t("Rarity"), "value": rarity_emojis.get(joker.rarity, "") + " " + _t(rarity_names.get(joker.rarity, "?")), "color": rarity_colors.get(joker.rarity, Color.WHITE)},
 		{"label": _t("Effect Type"), "value": cat_emoji + " " + cat_name},
 		{"divider": true},
-		{"label": _t("Lore"), "value": lore["lore_cn"] if lang == "中文" else lore["lore_en"], "size": 18},
+		{"label": _t("Lore"), "value": lore["lore_cn"] if is_cn else lore["lore_en"], "size": 18},
 		{"divider": true},
-		{"label": _t("Description") + "(CN)", "value": _t(joker.description)},
-		{"label": _t("Description") + "(EN)", "value": joker.description},
+		{"label": _t("Description"), "value": _t(joker.description) if is_cn else joker.description},
 	]
 	_show_card_tooltip(anchor, rows)
 
@@ -696,6 +731,7 @@ func _show_beast_tooltip(joker: JokerData, anchor: Label) -> void:
 
 func _show_constellation_tooltip(planet: PlanetData, anchor: Label) -> void:
 	var lang = _loc().current_language
+	var is_cn = (lang == "中文")
 	## 根据索引确定四象
 	var all_planets = PlanetDatabase.get_all_planets()
 	var idx = -1
@@ -718,35 +754,32 @@ func _show_constellation_tooltip(planet: PlanetData, anchor: Label) -> void:
 	var rows: Array = [
 		{"header": true, "value": planet.emoji + " " + _t(planet.planet_name), "color": sx_info["color"], "size": 28},
 		{"divider": true},
-		{"label": _t("English Name"), "value": planet.planet_name},
-		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + sx_info["name_cn"] + sx_info["suit_cn"], "color": sx_info["color"]},
+		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
 		{"label": _t("Hand Type"), "value": hand_name},
 		{"label": _t("Current Level"), "value": level_str, "color": Color(0.95, 0.85, 0.3)},
 		{"label": _t("Upgrade"), "value": "+" + str(planet.level_chips) + " Chips, +" + str(planet.level_mult) + " Mult"},
 		{"divider": true},
-		{"label": _t("Description") + "(CN)", "value": _t(planet.description)},
-		{"label": _t("Description") + "(EN)", "value": planet.description},
+		{"label": _t("Description"), "value": _t(planet.description) if is_cn else planet.description},
 	]
 	_show_card_tooltip(anchor, rows)
 
 ## ---------- 法宝 tooltip ----------
 
 func _show_artifact_tooltip(tarot: TarotData, anchor: Label) -> void:
+	var is_cn = (_loc().current_language == "中文")
 	var type_name = _t("Relic") if tarot.artifact_type == TarotData.ArtifactType.RELIC else _t("Formation")
 	var type_color = tarot.get_rarity_color()
 
 	var rows: Array = [
 		{"header": true, "value": tarot.emoji + " " + _t(tarot.tarot_name), "color": type_color, "size": 28},
 		{"divider": true},
-		{"label": _t("English Name"), "value": tarot.tarot_name},
 		{"label": _t("Type"), "value": type_name, "color": type_color},
 		{"label": _t("Cost"), "value": "$" + str(tarot.cost), "color": Color(0.95, 0.8, 0.2)},
 		{"divider": true},
-		{"label": _t("Description") + "(CN)", "value": _t(tarot.description)},
-		{"label": _t("Description") + "(EN)", "value": tarot.description},
+		{"label": _t("Description"), "value": _t(tarot.description) if is_cn else tarot.description},
 	]
 	if tarot.needs_selection:
-		rows.insert(5, {"label": _t("Selection"), "value": str(tarot.min_select) + "~" + str(tarot.max_select) + " " + _t("cards")})
+		rows.insert(4, {"label": _t("Selection"), "value": str(tarot.min_select) + "~" + str(tarot.max_select) + " " + _t("cards")})
 	_show_card_tooltip(anchor, rows)
 
 ## ========== 教程 ==========
@@ -778,6 +811,27 @@ func _on_quit() -> void:
 
 ## ========== 工具 ==========
 
+## 绘制分组边框矩形 (半透明背景 + 彩色细边框)
+func _draw_section_box(pos: Vector2, box_size: Vector2, border_color: Color) -> void:
+	## 半透明背景
+	var bg = ColorRect.new()
+	bg.position = pos; bg.size = box_size
+	bg.color = Color(border_color.r, border_color.g, border_color.b, 0.06)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bg)
+	## 四边细边框
+	var bw = 2.0
+	for edge in [
+		[Vector2(pos.x, pos.y), Vector2(box_size.x, bw)],                           ## top
+		[Vector2(pos.x, pos.y + box_size.y - bw), Vector2(box_size.x, bw)],         ## bottom
+		[Vector2(pos.x, pos.y), Vector2(bw, box_size.y)],                            ## left
+		[Vector2(pos.x + box_size.x - bw, pos.y), Vector2(bw, box_size.y)],         ## right
+	]:
+		var b = ColorRect.new()
+		b.position = edge[0]; b.size = edge[1]; b.color = border_color
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(b)
+
 func _clear() -> void:
 	_hide_card_tooltip()
 	for child in get_children(): child.queue_free()
@@ -785,23 +839,29 @@ func _clear() -> void:
 func _add_bg() -> void:
 	var overlay = ColorRect.new()
 	overlay.position = Vector2(0, 0); overlay.size = Vector2(SCREEN_W, SCREEN_H)
-	overlay.color = Color(0, 0, 0, 0.7 if mode == MenuMode.PAUSE else 0.45)
+	overlay.color = Color(0, 0, 0, 0.7 if mode == MenuMode.PAUSE else 0.35)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
 
+	## Title 模式用更小面板，下移避开标题；Pause 模式居中大面板
+	var p_w = MENU_W
+	var p_h = MENU_H if mode == MenuMode.PAUSE else 960.0
+	var p_x = CENTER_X - p_w / 2.0
+	var p_y = CENTER_Y - p_h / 2.0 if mode == MenuMode.PAUSE else SCREEN_H - p_h - 120.0
+
 	var panel = ColorRect.new()
-	panel.position = Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2)
-	panel.size = Vector2(MENU_W, MENU_H)
-	panel.color = Color(0.06, 0.09, 0.07, 0.95)
+	panel.position = Vector2(p_x, p_y)
+	panel.size = Vector2(p_w, p_h)
+	panel.color = Color(0.06, 0.09, 0.07, 0.92)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 
 	var bw = 4.0; var bc = Color(0.95, 0.85, 0.3, 0.3)
 	for edge in [
-		[Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2), Vector2(MENU_W, bw)],
-		[Vector2(CENTER_X - MENU_W/2, CENTER_Y + MENU_H/2 - bw), Vector2(MENU_W, bw)],
-		[Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2), Vector2(bw, MENU_H)],
-		[Vector2(CENTER_X + MENU_W/2 - bw, CENTER_Y - MENU_H/2), Vector2(bw, MENU_H)],
+		[Vector2(p_x, p_y), Vector2(p_w, bw)],
+		[Vector2(p_x, p_y + p_h - bw), Vector2(p_w, bw)],
+		[Vector2(p_x, p_y), Vector2(bw, p_h)],
+		[Vector2(p_x + p_w - bw, p_y), Vector2(bw, p_h)],
 	]:
 		var border = ColorRect.new()
 		border.position = edge[0]; border.size = edge[1]; border.color = bc
