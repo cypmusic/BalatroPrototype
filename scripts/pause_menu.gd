@@ -231,8 +231,10 @@ func _open_settings() -> void:
 
 	var lang_y = content_top + 3 * item_spacing
 	add_child(_make_label(_t("Language"), Vector2(CENTER_X - 360, lang_y), 36, Color(0.85, 0.85, 0.8)))
-	add_child(_make_button("  " + _loc().current_language + "  ▼",
-		Vector2(CENTER_X - 360, lang_y + 50), 32, 400, 72, _cycle_language))
+	var lang_btn = _make_button("  " + _loc().current_language + "  ▼",
+		Vector2(CENTER_X - 360, lang_y + 50), 32, 400, 72, _cycle_language)
+	lang_btn.z_index = 1  ## 确保在滑块之上
+	add_child(lang_btn)
 
 	add_child(_make_label(_t("Graphics settings coming soon..."),
 		Vector2(CENTER_X - 360, content_top + 4 * item_spacing), 28, Color(0.5, 0.5, 0.45)))
