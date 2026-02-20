@@ -26,6 +26,10 @@ var mode: MenuMode = MenuMode.PAUSE
 enum SubPanel { NONE, SETTINGS, COLLECTION, TUTORIAL }
 var current_panel: SubPanel = SubPanel.NONE
 
+## 收藏页分类标签
+enum CollTab { BEASTS, CONSTELLATIONS, ARTIFACTS }
+var coll_tab: CollTab = CollTab.BEASTS
+
 var master_volume: float = 0.8
 var sfx_volume: float = 0.8
 var music_volume: float = 0.8
@@ -244,39 +248,183 @@ func _cycle_language() -> void:
 func _open_collection() -> void:
 	_clear(); current_panel = SubPanel.COLLECTION; _add_bg()
 	_add_sub_header(_t("COLLECTION"))
-	var sy = CENTER_Y - MENU_H/2 + 260
 
-	add_child(_make_label("🐉  " + _t("Beast Cards"), Vector2(CENTER_X - 400, sy), 44, Color(0.3, 0.9, 0.4)))
+	## — 分类标签按钮 —
+	var tab_y = CENTER_Y - MENU_H/2 + 180
+	var tabs = [
+		{"label": "🐉 " + _t("Beast Cards"), "tab": CollTab.BEASTS, "color": Color(0.3, 0.9, 0.4)},
+		{"label": "⭐ " + _t("Constellation Cards"), "tab": CollTab.CONSTELLATIONS, "color": Color(0.2, 0.55, 0.85)},
+		{"label": "🔮 " + _t("Artifact Cards"), "tab": CollTab.ARTIFACTS, "color": Color(0.7, 0.35, 0.75)},
+	]
+	var tab_w = 280.0
+	var tab_total = tabs.size() * tab_w + (tabs.size() - 1) * 16
+	var tab_start_x = CENTER_X - tab_total / 2.0
+	for i in range(tabs.size()):
+		var tx = tab_start_x + i * (tab_w + 16)
+		var is_active = (tabs[i]["tab"] == coll_tab)
+		var btn = Button.new()
+		btn.text = tabs[i]["label"]
+		btn.position = Vector2(tx, tab_y)
+		btn.custom_minimum_size = Vector2(tab_w, 56)
+		_loc().apply_font_to_button(btn, 22)
+		if is_active:
+			btn.add_theme_color_override("font_color", tabs[i]["color"])
+		else:
+			btn.add_theme_color_override("font_color", Color(0.45, 0.45, 0.4))
+		var tab_val = tabs[i]["tab"]
+		btn.pressed.connect(func(): _switch_coll_tab(tab_val))
+		add_child(btn)
+
+	## — 滚动内容区域 —
+	var content_y = tab_y + 72
+	var content_h = MENU_H - (content_y - (CENTER_Y - MENU_H/2)) - 130  ## 留空给返回按钮
+	var panel_left = CENTER_X - MENU_W/2 + 20
+	var panel_inner_w = MENU_W - 40
+
+	var scroll = ScrollContainer.new()
+	scroll.position = Vector2(panel_left, content_y)
+	scroll.size = Vector2(panel_inner_w, content_h)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
+
+	var vbox = VBoxContainer.new()
+	vbox.custom_minimum_size = Vector2(panel_inner_w - 20, 0)
+	vbox.add_theme_constant_override("separation", 6)
+	scroll.add_child(vbox)
+
+	## — 填充当前分类的卡牌 —
+	match coll_tab:
+		CollTab.BEASTS:
+			_fill_beast_cards(vbox, panel_inner_w - 20)
+		CollTab.CONSTELLATIONS:
+			_fill_constellation_cards(vbox, panel_inner_w - 20)
+		CollTab.ARTIFACTS:
+			_fill_artifact_cards(vbox, panel_inner_w - 20)
+
+	_add_back_button()
+
+func _switch_coll_tab(tab: CollTab) -> void:
+	coll_tab = tab
+	_open_collection()
+
+func _fill_beast_cards(parent: Control, width: float) -> void:
 	var all_jokers = JokerDatabase.get_all_jokers()
 	var owned_ids: Array = []
 	if joker_slot_ref:
 		for j in joker_slot_ref.get_owned_jokers(): owned_ids.append(j.id)
-	var col = 0; var row = 0
+
+	## 按稀有度分组
+	var groups = {"Common": [], "Uncommon": [], "Rare": [], "Legendary": []}
 	for joker in all_jokers:
-		var c = Color(0.9, 0.9, 0.85) if joker.id in owned_ids else Color(0.35, 0.35, 0.3)
-		add_child(_make_label(joker.emoji + " " + joker.joker_name,
-			Vector2(CENTER_X - 420 + col * 210, sy + 70 + row * 52), 24, c))
-		col += 1
-		if col >= 4: col = 0; row += 1
+		var rname = joker.get_rarity_name()
+		if groups.has(rname):
+			groups[rname].append(joker)
+		else:
+			groups["Common"].append(joker)
 
-	var py = sy + 70 + (row + 2) * 52
-	add_child(_make_label("⭐  " + _t("Constellation Cards"), Vector2(CENTER_X - 400, py), 44, Color(0.2, 0.55, 0.85)))
-	col = 0; row = 0
-	for planet in PlanetDatabase.get_all_planets():
-		add_child(_make_label(planet.emoji + " " + planet.planet_name,
-			Vector2(CENTER_X - 420 + col * 280, py + 64 + row * 48), 24, Color(0.75, 0.75, 0.7)))
-		col += 1
-		if col >= 3: col = 0; row += 1
+	var rarity_colors = {
+		"Common": Color(0.3, 0.9, 0.4),
+		"Uncommon": Color(0.3, 0.6, 0.95),
+		"Rare": Color(0.9, 0.3, 0.3),
+		"Legendary": Color(0.95, 0.8, 0.2),
+	}
+	var rarity_labels = {
+		"Common": _t("Common"), "Uncommon": _t("Uncommon"),
+		"Rare": _t("Rare"), "Legendary": _t("Legendary"),
+	}
 
-	var ty = py + 64 + (row + 2) * 48
-	add_child(_make_label("🔮  " + _t("Artifact Cards"), Vector2(CENTER_X - 400, ty), 44, Color(0.7, 0.35, 0.75)))
-	col = 0; row = 0
-	for tarot in TarotDatabase.get_all_tarots():
-		add_child(_make_label(tarot.emoji + " " + tarot.tarot_name,
-			Vector2(CENTER_X - 420 + col * 280, ty + 64 + row * 48), 24, Color(0.75, 0.75, 0.7)))
-		col += 1
-		if col >= 3: col = 0; row += 1
-	_add_back_button()
+	for rarity in ["Common", "Uncommon", "Rare", "Legendary"]:
+		var cards = groups[rarity]
+		if cards.is_empty(): continue
+		## 稀有度标题
+		var header = Label.new()
+		header.text = "── " + rarity_labels[rarity] + " (" + str(cards.size()) + ") ──"
+		header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		header.custom_minimum_size = Vector2(width, 0)
+		header.add_theme_font_size_override("font_size", 22)
+		header.add_theme_color_override("font_color", rarity_colors[rarity])
+		_loc().apply_font_to_label(header)
+		parent.add_child(header)
+
+		## 卡牌网格
+		for joker in cards:
+			var c = Color(0.85, 0.85, 0.8) if joker.id in owned_ids else Color(0.35, 0.35, 0.3)
+			var lbl = Label.new()
+			lbl.text = joker.emoji + " " + _t(joker.joker_name)
+			lbl.add_theme_font_size_override("font_size", 20)
+			lbl.add_theme_color_override("font_color", c)
+			_loc().apply_font_to_label(lbl)
+			parent.add_child(lbl)
+
+func _fill_constellation_cards(parent: Control, width: float) -> void:
+	var all_planets = PlanetDatabase.get_all_planets()
+	## 按四象分组（每7张一组）
+	var groups = [
+		{"name": _t("Azure Dragon (East)"), "emoji": "🐉", "color": Color(0.2, 0.7, 0.4), "cards": []},
+		{"name": _t("White Tiger (West)"), "emoji": "🐯", "color": Color(0.8, 0.8, 0.8), "cards": []},
+		{"name": _t("Vermillion Bird (South)"), "emoji": "🐦", "color": Color(0.9, 0.3, 0.3), "cards": []},
+		{"name": _t("Black Tortoise (North)"), "emoji": "🐢", "color": Color(0.3, 0.4, 0.7), "cards": []},
+	]
+	for i in range(all_planets.size()):
+		var group_idx = i / 7
+		if group_idx < groups.size():
+			groups[group_idx]["cards"].append(all_planets[i])
+
+	for group in groups:
+		if group["cards"].is_empty(): continue
+		var header = Label.new()
+		header.text = group["emoji"] + " " + group["name"] + " (" + str(group["cards"].size()) + ")"
+		header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		header.custom_minimum_size = Vector2(width, 0)
+		header.add_theme_font_size_override("font_size", 22)
+		header.add_theme_color_override("font_color", group["color"])
+		_loc().apply_font_to_label(header)
+		parent.add_child(header)
+
+		for planet in group["cards"]:
+			var hand_name = _t(PokerHand.get_hand_name(planet.hand_type))
+			var lbl = Label.new()
+			lbl.text = planet.emoji + " " + _t(planet.planet_name) + "  →  " + hand_name
+			lbl.add_theme_font_size_override("font_size", 20)
+			lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.7))
+			_loc().apply_font_to_label(lbl)
+			parent.add_child(lbl)
+
+func _fill_artifact_cards(parent: Control, width: float) -> void:
+	var all_tarots = TarotDatabase.get_all_tarots()
+	## 按类型分组
+	var relics: Array = []
+	var formations: Array = []
+	for t in all_tarots:
+		if t.artifact_type == TarotData.ArtifactType.RELIC:
+			relics.append(t)
+		else:
+			formations.append(t)
+
+	var sections = [
+		{"name": _t("Relics"), "emoji": "⚱️", "color": Color(0.7, 0.35, 0.75), "cards": relics},
+		{"name": _t("Formations"), "emoji": "⚔️", "color": Color(0.85, 0.25, 0.25), "cards": formations},
+	]
+	for section in sections:
+		if section["cards"].is_empty(): continue
+		var header = Label.new()
+		header.text = section["emoji"] + " " + section["name"] + " (" + str(section["cards"].size()) + ")"
+		header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		header.custom_minimum_size = Vector2(width, 0)
+		header.add_theme_font_size_override("font_size", 22)
+		header.add_theme_color_override("font_color", section["color"])
+		_loc().apply_font_to_label(header)
+		parent.add_child(header)
+
+		for tarot in section["cards"]:
+			var lbl = Label.new()
+			lbl.text = tarot.emoji + " " + _t(tarot.tarot_name) + " - " + _t(tarot.description)
+			lbl.add_theme_font_size_override("font_size", 18)
+			lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.7))
+			lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			lbl.custom_minimum_size = Vector2(width, 0)
+			_loc().apply_font_to_label(lbl)
+			parent.add_child(lbl)
 
 ## ========== 教程 ==========
 

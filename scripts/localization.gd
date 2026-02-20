@@ -634,6 +634,12 @@ var translations: Dictionary = {
 	"Beast": {"中文": "异兽"},
 	"Celestial Tome": {"中文": "天书"},
 	"Phantom": {"中文": "虚相"},
+	"Relics": {"中文": "神器"},
+	"Formations": {"中文": "阵法"},
+	"Azure Dragon (East)": {"中文": "青龙 (东方)"},
+	"White Tiger (West)": {"中文": "白虎 (西方)"},
+	"Vermillion Bird (South)": {"中文": "朱雀 (南方)"},
+	"Black Tortoise (North)": {"中文": "玄武 (北方)"},
 
 	## ============================================================
 	## TAB 状态面板
