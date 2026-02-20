@@ -20,10 +20,10 @@ const BTN_W: float = 720.0
 const BTN_H: float = 104.0
 const BTN_SPACING: float = 128.0
 
-## Title 模式面板 (居中偏下)
-const TITLE_PANEL_W: float = 1200.0
-const TITLE_PANEL_H: float = 1100.0
-const TITLE_PANEL_BOTTOM_MARGIN: float = 160.0
+## Title 模式面板 (居中偏下，窄长)
+const TITLE_PANEL_W: float = 700.0
+const TITLE_PANEL_H: float = 1030.0
+const TITLE_PANEL_BOTTOM_MARGIN: float = 580.0
 
 ## 收藏页大面板常量
 const COLL_W: float = 3000.0
