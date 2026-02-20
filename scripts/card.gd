@@ -18,10 +18,10 @@ var is_scoring: bool = false
 var is_exiting: bool = false  ## 退场动画中
 
 ## 卡牌视觉参数
-const CARD_WIDTH: float = 140.0
-const CARD_HEIGHT: float = 195.0
-const HOVER_OFFSET: float = -35.0
-const SELECT_OFFSET: float = -35.0
+const CARD_WIDTH: float = 280.0
+const CARD_HEIGHT: float = 390.0
+const HOVER_OFFSET: float = -70.0
+const SELECT_OFFSET: float = -70.0
 
 var base_position: Vector2 = Vector2.ZERO
 var target_position: Vector2 = Vector2.ZERO
@@ -30,7 +30,7 @@ var target_position: Vector2 = Vector2.ZERO
 var mouse_press_pos: Vector2 = Vector2.ZERO
 var is_mouse_down: bool = false
 var drag_confirmed: bool = false
-const DRAG_THRESHOLD: float = 10.0
+const DRAG_THRESHOLD: float = 20.0
 
 ## 入场动画参数
 var anim_progress: float = 0.0
@@ -204,12 +204,12 @@ func _draw() -> void:
 
 	## 光效
 	if score_glow_intensity > 0.0:
-		_draw_glow(rect, Color(1.0, 0.85, 0.3, score_glow_intensity * 0.6), 12.0)
+		_draw_glow(rect, Color(1.0, 0.85, 0.3, score_glow_intensity * 0.6), 24.0)
 	elif hover_glow > 0.05:
-		_draw_glow(rect, Color(0.5, 0.7, 1.0, hover_glow * 0.3), 8.0)
+		_draw_glow(rect, Color(0.5, 0.7, 1.0, hover_glow * 0.3), 16.0)
 
 	## 阴影
-	var shadow_offset = Vector2(8, 8) if is_dragging else Vector2(4, 4)
+	var shadow_offset = Vector2(16, 16) if is_dragging else Vector2(8, 8)
 	var shadow_alpha = 0.4 if is_dragging else 0.25
 	draw_rect(Rect2(rect.position + shadow_offset, rect.size), Color(0, 0, 0, shadow_alpha))
 
@@ -227,16 +227,16 @@ func _draw() -> void:
 	var border_width: float
 	if is_scoring and score_glow_intensity > 0.3:
 		border_color = Color(0.95, 0.75, 0.2)
-		border_width = 4.0
+		border_width = 8.0
 	elif is_selected:
 		border_color = Color(0.3, 0.5, 0.9)
-		border_width = 3.5
+		border_width = 7.0
 	elif is_dragging:
 		border_color = Color(0.5, 0.7, 1.0)
-		border_width = 3.0
+		border_width = 6.0
 	else:
 		border_color = Color(0.55, 0.55, 0.55)
-		border_width = 1.5
+		border_width = 3.0
 	draw_rect(rect, border_color, false, border_width)
 
 	## ===== 增强卡牌特效 =====
@@ -250,16 +250,16 @@ func _draw() -> void:
 	var rank_text = card_data.get_rank_text()
 	var suit_symbol = card_data.get_suit_symbol()
 
-	draw_string(ThemeDB.fallback_font, Vector2(-CARD_WIDTH / 2 + 12, -CARD_HEIGHT / 2 + 32),
-		rank_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, suit_color)
-	draw_string(ThemeDB.fallback_font, Vector2(-CARD_WIDTH / 2 + 12, -CARD_HEIGHT / 2 + 56),
-		suit_symbol, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, suit_color)
-	draw_string(ThemeDB.fallback_font, Vector2(-18, 15),
-		suit_symbol, HORIZONTAL_ALIGNMENT_LEFT, -1, 50, suit_color)
-	draw_string(ThemeDB.fallback_font, Vector2(CARD_WIDTH / 2 - 35, CARD_HEIGHT / 2 - 12),
-		rank_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, suit_color)
-	draw_string(ThemeDB.fallback_font, Vector2(CARD_WIDTH / 2 - 32, CARD_HEIGHT / 2 - 32),
-		suit_symbol, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, suit_color)
+	draw_string(ThemeDB.fallback_font, Vector2(-CARD_WIDTH / 2 + 24, -CARD_HEIGHT / 2 + 64),
+		rank_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 48, suit_color)
+	draw_string(ThemeDB.fallback_font, Vector2(-CARD_WIDTH / 2 + 24, -CARD_HEIGHT / 2 + 112),
+		suit_symbol, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, suit_color)
+	draw_string(ThemeDB.fallback_font, Vector2(-36, 30),
+		suit_symbol, HORIZONTAL_ALIGNMENT_LEFT, -1, 100, suit_color)
+	draw_string(ThemeDB.fallback_font, Vector2(CARD_WIDTH / 2 - 70, CARD_HEIGHT / 2 - 24),
+		rank_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 48, suit_color)
+	draw_string(ThemeDB.fallback_font, Vector2(CARD_WIDTH / 2 - 64, CARD_HEIGHT / 2 - 64),
+		suit_symbol, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, suit_color)
 
 	## ===== 增强标记徽章 =====
 	if card_data.enhancement != CardData.Enhancement.NONE:
@@ -351,37 +351,37 @@ func _draw_foil_effect(rect: Rect2) -> void:
 		var bx = sweep_x + offset
 		var alpha = 0.12 * (1.0 - abs(i - 2) / 2.5)
 		var h = rect.size.y
-		draw_rect(Rect2(clampf(bx, rect.position.x, rect.end.x - 2),
-			rect.position.y, clampf(band_w * 0.15, 1, rect.end.x - bx), h),
+		draw_rect(Rect2(clampf(bx, rect.position.x, rect.end.x - 4),
+			rect.position.y, clampf(band_w * 0.15, 2, rect.end.x - bx), h),
 			Color(0.75, 0.82, 0.95, alpha))
 
 	## 整体淡银色叠加
 	draw_rect(rect, Color(0.7, 0.78, 0.9, 0.06))
 
 	## 内边框银色光
-	var inner = rect.grow(-3)
-	draw_rect(inner, Color(0.65, 0.75, 0.9, 0.15 + sin(enhance_time * 2.0) * 0.05), false, 1.5)
+	var inner = rect.grow(-6)
+	draw_rect(inner, Color(0.65, 0.75, 0.9, 0.15 + sin(enhance_time * 2.0) * 0.05), false, 3.0)
 
 ## ----- 全息 Holographic: 彩虹边框 + 微光 -----
 func _draw_holo_effect(rect: Rect2) -> void:
 	## 彩虹色内边框 — 颜色随时间循环
 	var hue = fmod(enhance_time * 0.3, 1.0)
 	var rainbow = Color.from_hsv(hue, 0.5, 1.0, 0.35)
-	var inner = rect.grow(-2)
-	draw_rect(inner, rainbow, false, 2.5)
+	var inner = rect.grow(-4)
+	draw_rect(inner, rainbow, false, 5.0)
 
 	## 第二层偏移色
 	var hue2 = fmod(hue + 0.33, 1.0)
 	var rainbow2 = Color.from_hsv(hue2, 0.4, 1.0, 0.15)
-	var inner2 = rect.grow(-5)
-	draw_rect(inner2, rainbow2, false, 1.5)
+	var inner2 = rect.grow(-10)
+	draw_rect(inner2, rainbow2, false, 3.0)
 
 	## 细微全息纹理 — 水平扫描线
-	var scan_y = rect.position.y + fmod(enhance_time * 40.0, rect.size.y)
+	var scan_y = rect.position.y + fmod(enhance_time * 80.0, rect.size.y)
 	for i in range(3):
-		var sy = scan_y + i * 3
+		var sy = scan_y + i * 6
 		if sy >= rect.position.y and sy <= rect.end.y:
-			draw_rect(Rect2(rect.position.x + 3, sy, rect.size.x - 6, 1),
+			draw_rect(Rect2(rect.position.x + 6, sy, rect.size.x - 12, 2),
 				Color.from_hsv(fmod(hue + i * 0.1, 1.0), 0.3, 1.0, 0.08))
 
 ## ----- 多彩 Polychrome: 棱镜光谱渐变 -----
@@ -395,25 +395,25 @@ func _draw_polychrome_effect(rect: Rect2) -> void:
 		var t = float(i) / (steps - 1)
 		var hue = fmod(base_hue + t * 0.6, 1.0)
 		var color = Color.from_hsv(hue, 0.35, 1.0, 0.08)
-		draw_rect(Rect2(rect.position.x + 2, rect.position.y + i * step_h + 2,
-			rect.size.x - 4, step_h + 1), color)
+		draw_rect(Rect2(rect.position.x + 4, rect.position.y + i * step_h + 4,
+			rect.size.x - 8, step_h + 1), color)
 
 	## 棱镜边框 — 双色交替
 	var c1 = Color.from_hsv(fmod(base_hue, 1.0), 0.6, 1.0, 0.4)
 	var c2 = Color.from_hsv(fmod(base_hue + 0.5, 1.0), 0.6, 1.0, 0.4)
-	var inner = rect.grow(-2)
+	var inner = rect.grow(-4)
 	## 上下用 c1，左右用 c2
-	draw_rect(Rect2(inner.position.x, inner.position.y, inner.size.x, 2), c1)
-	draw_rect(Rect2(inner.position.x, inner.end.y - 2, inner.size.x, 2), c1)
-	draw_rect(Rect2(inner.position.x, inner.position.y, 2, inner.size.y), c2)
-	draw_rect(Rect2(inner.end.x - 2, inner.position.y, 2, inner.size.y), c2)
+	draw_rect(Rect2(inner.position.x, inner.position.y, inner.size.x, 4), c1)
+	draw_rect(Rect2(inner.position.x, inner.end.y - 4, inner.size.x, 4), c1)
+	draw_rect(Rect2(inner.position.x, inner.position.y, 4, inner.size.y), c2)
+	draw_rect(Rect2(inner.end.x - 4, inner.position.y, 4, inner.size.y), c2)
 
 	## 角落亮点
 	var sparkle = 0.3 + sin(enhance_time * 3.0) * 0.15
-	var sp_size = 6.0
+	var sp_size = 12.0
 	for corner in [rect.position, Vector2(rect.end.x - sp_size, rect.position.y),
 			Vector2(rect.position.x, rect.end.y - sp_size), rect.end - Vector2(sp_size, sp_size)]:
-		draw_rect(Rect2(corner + Vector2(3, 3), Vector2(sp_size, sp_size)),
+		draw_rect(Rect2(corner + Vector2(6, 6), Vector2(sp_size, sp_size)),
 			Color(1.0, 1.0, 1.0, sparkle))
 
 ## ===== 增强标记徽章 =====
@@ -434,8 +434,8 @@ func _draw_enhancement_badge(rect: Rect2) -> void:
 			return
 
 	## 徽章背景圆点
-	var badge_x = rect.position.x + rect.size.x - 22
-	var badge_y = rect.position.y + 14
-	draw_circle(Vector2(badge_x + 6, badge_y + 6), 9.0, Color(0.1, 0.1, 0.1, 0.7))
-	draw_string(ThemeDB.fallback_font, Vector2(badge_x, badge_y + 12),
-		badge_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, badge_color)
+	var badge_x = rect.position.x + rect.size.x - 44
+	var badge_y = rect.position.y + 28
+	draw_circle(Vector2(badge_x + 12, badge_y + 12), 18.0, Color(0.1, 0.1, 0.1, 0.7))
+	draw_string(ThemeDB.fallback_font, Vector2(badge_x, badge_y + 24),
+		badge_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 28, badge_color)
