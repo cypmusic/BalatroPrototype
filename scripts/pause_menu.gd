@@ -95,6 +95,7 @@ func _make_label(text: String, pos: Vector2, font_size: int, color: Color,
 	if min_w > 0: lbl.custom_minimum_size = Vector2(min_w, 0)
 	lbl.horizontal_alignment = alignment
 	lbl.add_theme_color_override("font_color", color)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE  ## 防止标签拦截鼠标事件
 	_loc().apply_font_to_label(lbl, font_size)
 	return lbl
 
@@ -389,9 +390,11 @@ func _add_coll_header(text: String) -> void:
 
 func _add_coll_back_button() -> void:
 	var by = CENTER_Y + COLL_H / 2.0 - 50
-	add_child(_make_button("  ← " + _t("Back") + "  ",
+	var btn = _make_button("  ← " + _t("Back") + "  ",
 		Vector2(CENTER_X - 90, by), 18, 180, 40,
-		func(): _build_main_menu()))
+		func(): _build_main_menu())
+	btn.z_index = 10  ## 确保在网格标签之上，防止被遮挡
+	add_child(btn)
 
 ## ---------- 异兽网格 (垂直两端对齐) ----------
 
@@ -946,6 +949,8 @@ func _add_sub_header(text: String, pr: Rect2) -> void:
 
 ## 返回按钮（自适应面板位置）
 func _add_back_button(pr: Rect2) -> void:
-	add_child(_make_button("  ← " + _t("Back") + "  ",
+	var btn = _make_button("  ← " + _t("Back") + "  ",
 		Vector2(CENTER_X - 80, pr.position.y + pr.size.y - 60), 18, 160, 42,
-		func(): _build_main_menu()))
+		func(): _build_main_menu())
+	btn.z_index = 10  ## 确保在滑块/其他控件之上，防止被遮挡
+	add_child(btn)

@@ -23,6 +23,7 @@ func _t(key: String) -> String:
 	return Loc.i().t(key)
 
 func _apply_font(lbl: Label, size: int = -1) -> void:
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	Loc.i().apply_font_to_label(lbl, size)
 
 func _apply_font_btn(btn: Button, size: int = -1) -> void:
@@ -96,6 +97,7 @@ func _build_ui() -> void:
 	progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	progress.add_theme_font_size_override("font_size", 28)
 	progress.add_theme_color_override("font_color", Color(0.7, 0.7, 0.65))
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(progress)
 
 	card_canvas = Node2D.new()
@@ -212,6 +214,7 @@ func _build_blind_card(x: float, info: Dictionary, is_current: bool, is_complete
 		check.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		check.add_theme_font_size_override("font_size", 60)
 		check.add_theme_color_override("font_color", Color(0.3, 0.8, 0.3, 0.7))
+		check.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card_canvas.add_child(check)
 		return
 
@@ -221,6 +224,7 @@ func _build_blind_card(x: float, info: Dictionary, is_current: bool, is_complete
 	emoji_lbl.custom_minimum_size = Vector2(CARD_W, 0)
 	emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	emoji_lbl.add_theme_font_size_override("font_size", 50)
+	emoji_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_canvas.add_child(emoji_lbl)
 
 	var name_lbl = Label.new()
@@ -256,6 +260,7 @@ func _build_blind_card(x: float, info: Dictionary, is_current: bool, is_complete
 	target_lbl.custom_minimum_size = Vector2(CARD_W, 0)
 	target_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	target_lbl.add_theme_font_size_override("font_size", 36)
+	target_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tc = Color(0.9, 0.3, 0.3, txt_alpha) if is_current else Color(0.7, 0.4, 0.4, txt_alpha)
 	target_lbl.add_theme_color_override("font_color", tc)
 	card_canvas.add_child(target_lbl)
