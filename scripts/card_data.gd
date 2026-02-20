@@ -1,5 +1,5 @@
 ## card_data.gd
-## 卡牌数据类 V2 - 新增增强系统 (Foil / Holographic / Polychrome)
+## 卡牌数据类 V3 - 增强系统 + 灵印系统 (四灵封印)
 class_name CardData
 extends Resource
 
@@ -18,9 +18,19 @@ enum Enhancement {
 	POLYCHROME,    ## 多彩 - ×1.5 Mult
 }
 
+## 灵印类型（四灵封印 — 神祇牌专属）
+enum Seal {
+	NONE,
+	AZURE_DRAGON,    ## 青龙印 — 计分时额外触发一次（retrigger）
+	VERMILLION_BIRD, ## 朱雀印 — 弃牌时获得 $3
+	WHITE_TIGER,     ## 白虎印 — 计分时 +20 Chips
+	BLACK_TORTOISE,  ## 玄武印 — 留在手中时 +5 Mult
+}
+
 @export var suit: Suit
 @export var rank: Rank
 @export var enhancement: Enhancement = Enhancement.NONE
+@export var seal: Seal = Seal.NONE
 
 ## 获取牌的筹码值（Balatro 中每张牌的基础分值）
 func get_chip_value() -> int:
@@ -63,6 +73,33 @@ func get_enhancement_color() -> Color:
 		Enhancement.POLYCHROME: return Color(0.95, 0.85, 0.2)
 		_: return Color.WHITE
 
+## 获取灵印名称
+func get_seal_name() -> String:
+	match seal:
+		Seal.AZURE_DRAGON: return "Azure Dragon Seal"
+		Seal.VERMILLION_BIRD: return "Vermillion Bird Seal"
+		Seal.WHITE_TIGER: return "White Tiger Seal"
+		Seal.BLACK_TORTOISE: return "Black Tortoise Seal"
+		_: return ""
+
+## 获取灵印颜色
+func get_seal_color() -> Color:
+	match seal:
+		Seal.AZURE_DRAGON: return Color(0.2, 0.6, 0.9)     ## 青色
+		Seal.VERMILLION_BIRD: return Color(0.9, 0.25, 0.2)  ## 朱红
+		Seal.WHITE_TIGER: return Color(0.9, 0.9, 0.85)      ## 银白
+		Seal.BLACK_TORTOISE: return Color(0.15, 0.15, 0.3)   ## 玄黑
+		_: return Color.WHITE
+
+## 获取灵印 Emoji
+func get_seal_emoji() -> String:
+	match seal:
+		Seal.AZURE_DRAGON: return "🐉"
+		Seal.VERMILLION_BIRD: return "🔥"
+		Seal.WHITE_TIGER: return "🐅"
+		Seal.BLACK_TORTOISE: return "🐢"
+		_: return ""
+
 ## 获取花色的显示符号
 func get_suit_symbol() -> String:
 	match suit:
@@ -92,6 +129,9 @@ func get_suit_color() -> Color:
 ## 用于显示的完整名称
 func get_display_name() -> String:
 	var base = get_rank_text() + get_suit_symbol()
+	var prefix = ""
+	if seal != Seal.NONE:
+		prefix = get_seal_emoji() + " "
 	if enhancement != Enhancement.NONE:
-		return get_enhancement_name() + " " + base
-	return base
+		prefix += get_enhancement_name() + " "
+	return prefix + base

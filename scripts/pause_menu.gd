@@ -9,16 +9,16 @@ signal continue_game()
 signal return_to_title()
 signal language_changed()
 
-const SCREEN_W: float = 1920.0
-const SCREEN_H: float = 1280.0
+const SCREEN_W: float = 3840.0
+const SCREEN_H: float = 2160.0
 const CENTER_X: float = SCREEN_W / 2.0
 const CENTER_Y: float = SCREEN_H / 2.0
 
-const MENU_W: float = 500.0
-const MENU_H: float = 700.0
-const BTN_W: float = 360.0
-const BTN_H: float = 52.0
-const BTN_SPACING: float = 64.0
+const MENU_W: float = 1000.0
+const MENU_H: float = 1400.0
+const BTN_W: float = 720.0
+const BTN_H: float = 104.0
+const BTN_SPACING: float = 128.0
 
 enum MenuMode { TITLE, PAUSE }
 var mode: MenuMode = MenuMode.PAUSE
@@ -99,11 +99,11 @@ func _build_main_menu() -> void:
 
 	if mode == MenuMode.PAUSE:
 		add_child(_make_label(_t("PAUSED"),
-			Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2 + 20),
-			42, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
+			Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2 + 40),
+			84, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
 		var line = ColorRect.new()
-		line.position = Vector2(CENTER_X - 120, CENTER_Y - MENU_H/2 + 78)
-		line.size = Vector2(240, 2)
+		line.position = Vector2(CENTER_X - 240, CENTER_Y - MENU_H/2 + 156)
+		line.size = Vector2(480, 4)
 		line.color = Color(0.95, 0.85, 0.3, 0.4)
 		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(line)
@@ -132,15 +132,15 @@ func _build_main_menu() -> void:
 			{"text": "✕  " + _t("Quit Game"), "callback": _on_quit},
 		]
 
-	var start_y = CENTER_Y - MENU_H/2 + (110 if mode == MenuMode.PAUSE else 60)
+	var start_y = CENTER_Y - MENU_H/2 + (220 if mode == MenuMode.PAUSE else 120)
 	for i in range(buttons.size()):
 		add_child(_make_button(buttons[i]["text"],
 			Vector2(CENTER_X - BTN_W/2, start_y + i * BTN_SPACING),
-			22, BTN_W, BTN_H, buttons[i]["callback"]))
+			44, BTN_W, BTN_H, buttons[i]["callback"]))
 
 	add_child(_make_label(GameConfig.VERSION_LABEL,
-		Vector2(CENTER_X - MENU_W/2, CENTER_Y + MENU_H/2 - 40),
-		12, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
+		Vector2(CENTER_X - MENU_W/2, CENTER_Y + MENU_H/2 - 80),
+		24, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
 
 func _on_continue() -> void:
 	visible = false; continue_game.emit()
@@ -160,46 +160,66 @@ func _open_settings() -> void:
 	_clear(); current_panel = SubPanel.SETTINGS; _add_bg()
 	_add_sub_header(_t("SETTINGS"))
 
-	var start_y = CENTER_Y - MENU_H/2 + 130
+	var start_y = CENTER_Y - MENU_H/2 + 260
 	var cats = [
 		{"label": _t("Master Volume"), "value": master_volume},
 		{"label": _t("SFX Volume"), "value": sfx_volume},
 		{"label": _t("Music Volume"), "value": music_volume},
 	]
 	for ci in range(cats.size()):
-		var y = start_y + ci * 80
-		add_child(_make_label(cats[ci]["label"], Vector2(CENTER_X - 180, y), 18, Color(0.85, 0.85, 0.8)))
+		var y = start_y + ci * 160
+		add_child(_make_label(cats[ci]["label"], Vector2(CENTER_X - 360, y), 36, Color(0.85, 0.85, 0.8)))
 
 		var slider = HSlider.new()
 		slider.min_value = 0.0; slider.max_value = 1.0; slider.step = 0.05
 		slider.value = cats[ci]["value"]
-		slider.position = Vector2(CENTER_X - 180, y + 28)
-		slider.custom_minimum_size = Vector2(360, 20)
+		slider.position = Vector2(CENTER_X - 360, y + 56)
+		slider.custom_minimum_size = Vector2(720, 40)
 		var idx = ci
 		slider.value_changed.connect(func(v): _on_volume_changed(idx, v))
 		add_child(slider)
 
 		var val_lbl = _make_label(str(int(cats[ci]["value"] * 100)) + "%",
-			Vector2(CENTER_X + 200, y + 25), 16, Color(0.95, 0.85, 0.3))
+			Vector2(CENTER_X + 400, y + 50), 32, Color(0.95, 0.85, 0.3))
 		val_lbl.name = "VolLabel" + str(ci)
 		add_child(val_lbl)
 
-	var lang_y = start_y + 3 * 80
-	add_child(_make_label(_t("Language"), Vector2(CENTER_X - 180, lang_y), 18, Color(0.85, 0.85, 0.8)))
+	var lang_y = start_y + 3 * 160
+	add_child(_make_label(_t("Language"), Vector2(CENTER_X - 360, lang_y), 36, Color(0.85, 0.85, 0.8)))
 	add_child(_make_button("  " + _loc().current_language + "  ▼",
-		Vector2(CENTER_X - 180, lang_y + 28), 16, 200, 36, _cycle_language))
+		Vector2(CENTER_X - 360, lang_y + 56), 32, 400, 72, _cycle_language))
 
 	add_child(_make_label(_t("Graphics settings coming soon..."),
-		Vector2(CENTER_X - 180, start_y + 4 * 80), 14, Color(0.5, 0.5, 0.45)))
+		Vector2(CENTER_X - 360, start_y + 4 * 160), 28, Color(0.5, 0.5, 0.45)))
 	_add_back_button()
 
 func _on_volume_changed(index: int, value: float) -> void:
 	match index:
-		0: master_volume = value
-		1: sfx_volume = value
-		2: music_volume = value
+		0:
+			master_volume = value
+			_set_bus_volume("Master", value)
+		1:
+			sfx_volume = value
+			_set_bus_volume("SFX", value)
+		2:
+			music_volume = value
+			_set_bus_volume("Music", value)
 	var lbl = get_node_or_null("VolLabel" + str(index))
 	if lbl: lbl.text = str(int(value * 100)) + "%"
+
+func _set_bus_volume(bus_name: String, linear: float) -> void:
+	var bus_idx = AudioServer.get_bus_index(bus_name)
+	if bus_idx < 0:
+		## 如果找不到指定总线，尝试使用 Master
+		if bus_name != "Master":
+			bus_idx = AudioServer.get_bus_index("Master")
+		if bus_idx < 0:
+			bus_idx = 0  ## 回退到第一个总线
+	if linear <= 0.0:
+		AudioServer.set_bus_mute(bus_idx, true)
+	else:
+		AudioServer.set_bus_mute(bus_idx, false)
+		AudioServer.set_bus_volume_db(bus_idx, linear_to_db(linear))
 
 func _cycle_language() -> void:
 	var langs = ["English", "中文"]
@@ -224,9 +244,9 @@ func _cycle_language() -> void:
 func _open_collection() -> void:
 	_clear(); current_panel = SubPanel.COLLECTION; _add_bg()
 	_add_sub_header(_t("COLLECTION"))
-	var sy = CENTER_Y - MENU_H/2 + 130
+	var sy = CENTER_Y - MENU_H/2 + 260
 
-	add_child(_make_label("🃏  " + _t("Joker Cards"), Vector2(CENTER_X - 200, sy), 22, Color(0.3, 0.9, 0.4)))
+	add_child(_make_label("🐉  " + _t("Beast Cards"), Vector2(CENTER_X - 400, sy), 44, Color(0.3, 0.9, 0.4)))
 	var all_jokers = JokerDatabase.get_all_jokers()
 	var owned_ids: Array = []
 	if joker_slot_ref:
@@ -235,25 +255,25 @@ func _open_collection() -> void:
 	for joker in all_jokers:
 		var c = Color(0.9, 0.9, 0.85) if joker.id in owned_ids else Color(0.35, 0.35, 0.3)
 		add_child(_make_label(joker.emoji + " " + joker.joker_name,
-			Vector2(CENTER_X - 210 + col * 105, sy + 35 + row * 26), 12, c))
+			Vector2(CENTER_X - 420 + col * 210, sy + 70 + row * 52), 24, c))
 		col += 1
 		if col >= 4: col = 0; row += 1
 
-	var py = sy + 35 + (row + 2) * 26
-	add_child(_make_label("🪐  " + _t("Planet Cards"), Vector2(CENTER_X - 200, py), 22, Color(0.2, 0.55, 0.85)))
+	var py = sy + 70 + (row + 2) * 52
+	add_child(_make_label("⭐  " + _t("Constellation Cards"), Vector2(CENTER_X - 400, py), 44, Color(0.2, 0.55, 0.85)))
 	col = 0; row = 0
 	for planet in PlanetDatabase.get_all_planets():
 		add_child(_make_label(planet.emoji + " " + planet.planet_name,
-			Vector2(CENTER_X - 210 + col * 140, py + 32 + row * 24), 12, Color(0.75, 0.75, 0.7)))
+			Vector2(CENTER_X - 420 + col * 280, py + 64 + row * 48), 24, Color(0.75, 0.75, 0.7)))
 		col += 1
 		if col >= 3: col = 0; row += 1
 
-	var ty = py + 32 + (row + 2) * 24
-	add_child(_make_label("🔮  " + _t("Tarot Cards"), Vector2(CENTER_X - 200, ty), 22, Color(0.7, 0.35, 0.75)))
+	var ty = py + 64 + (row + 2) * 48
+	add_child(_make_label("🔮  " + _t("Artifact Cards"), Vector2(CENTER_X - 400, ty), 44, Color(0.7, 0.35, 0.75)))
 	col = 0; row = 0
 	for tarot in TarotDatabase.get_all_tarots():
 		add_child(_make_label(tarot.emoji + " " + tarot.tarot_name,
-			Vector2(CENTER_X - 210 + col * 140, ty + 32 + row * 24), 12, Color(0.75, 0.75, 0.7)))
+			Vector2(CENTER_X - 420 + col * 280, ty + 64 + row * 48), 24, Color(0.75, 0.75, 0.7)))
 		col += 1
 		if col >= 3: col = 0; row += 1
 	_add_back_button()
@@ -263,23 +283,23 @@ func _open_collection() -> void:
 func _open_tutorial() -> void:
 	_clear(); current_panel = SubPanel.TUTORIAL; _add_bg()
 	_add_sub_header(_t("HOW TO PLAY"))
-	var sy = CENTER_Y - MENU_H/2 + 130
+	var sy = CENTER_Y - MENU_H/2 + 260
 	var tuts = [
 		["🎯 " + _t("Goal"), _t("Reach the target score before running out of hands.")],
-		["🃏 " + _t("Hands"), _t("Select up to 5 cards to play poker hands.")],
+		["🃏 " + _t("Hands"), _t("Select up to 6 cards to play poker hands.")],
 		["📊 " + _t("Scoring"), _t("Chips × Mult = Score. Better hands = more points.")],
 		["🗑️ " + _t("Discard"), _t("Discard unwanted cards to draw new ones.")],
-		["🤡 " + _t("Jokers"), _t("Buy Jokers in the shop for permanent bonuses.")],
-		["🪐 " + _t("Planets"), _t("Planet cards level up hand types permanently.")],
-		["🔮 " + _t("Tarots"), _t("Tarot cards modify your hand cards.")],
-		["🏪 " + _t("Shop"), _t("After each round, buy Jokers and consumables.")],
+		["🐉 " + _t("Beasts"), _t("Buy Beasts in the shop for permanent bonuses.")],
+		["⭐ " + _t("Constellations"), _t("Constellation cards level up hand types permanently.")],
+		["🔮 " + _t("Artifacts"), _t("Artifact cards modify your hand cards.")],
+		["🏪 " + _t("Shop"), _t("After each round, buy Beasts and consumables.")],
 		["⚔️ " + _t("Blinds"), _t("Small → Big → Boss. Skip for rewards.")],
 		["🏆 " + _t("Victory"), _t("Clear all 8 Antes to win!")],
 	]
 	for i in range(tuts.size()):
-		var y = sy + i * 48
-		add_child(_make_label(tuts[i][0], Vector2(CENTER_X - 220, y), 16, Color(0.95, 0.85, 0.3)))
-		add_child(_make_label(tuts[i][1], Vector2(CENTER_X - 220, y + 22), 12, Color(0.65, 0.65, 0.6)))
+		var y = sy + i * 96
+		add_child(_make_label(tuts[i][0], Vector2(CENTER_X - 440, y), 32, Color(0.95, 0.85, 0.3)))
+		add_child(_make_label(tuts[i][1], Vector2(CENTER_X - 440, y + 44), 24, Color(0.65, 0.65, 0.6)))
 	_add_back_button()
 
 func _on_quit() -> void:
@@ -304,7 +324,7 @@ func _add_bg() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 
-	var bw = 2.0; var bc = Color(0.95, 0.85, 0.3, 0.3)
+	var bw = 4.0; var bc = Color(0.95, 0.85, 0.3, 0.3)
 	for edge in [
 		[Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2), Vector2(MENU_W, bw)],
 		[Vector2(CENTER_X - MENU_W/2, CENTER_Y + MENU_H/2 - bw), Vector2(MENU_W, bw)],
@@ -317,15 +337,15 @@ func _add_bg() -> void:
 		add_child(border)
 
 func _add_sub_header(text: String) -> void:
-	add_child(_make_label(text, Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2 + 20),
-		36, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
+	add_child(_make_label(text, Vector2(CENTER_X - MENU_W/2, CENTER_Y - MENU_H/2 + 40),
+		72, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, MENU_W))
 	var line = ColorRect.new()
-	line.position = Vector2(CENTER_X - 100, CENTER_Y - MENU_H/2 + 68)
-	line.size = Vector2(200, 2); line.color = Color(0.95, 0.85, 0.3, 0.3)
+	line.position = Vector2(CENTER_X - 200, CENTER_Y - MENU_H/2 + 136)
+	line.size = Vector2(400, 4); line.color = Color(0.95, 0.85, 0.3, 0.3)
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(line)
 
 func _add_back_button() -> void:
 	add_child(_make_button("  ← " + _t("Back") + "  ",
-		Vector2(CENTER_X - 80, CENTER_Y + MENU_H/2 - 60), 18, 160, 42,
+		Vector2(CENTER_X - 160, CENTER_Y + MENU_H/2 - 120), 36, 320, 84,
 		func(): _build_main_menu()))
