@@ -5,8 +5,8 @@ extends Node2D
 signal transition_midpoint()  ## 黑屏时触发（此时切换场景内容）
 signal transition_complete()  ## 完全结束
 
-const SCREEN_W: float = 3840.0
-const SCREEN_H: float = 2160.0
+const SCREEN_W: float = 1920.0
+const SCREEN_H: float = 1080.0
 const CENTER_X: float = SCREEN_W / 2.0
 const CENTER_Y: float = SCREEN_H / 2.0
 
@@ -77,7 +77,7 @@ func _create_vortex() -> void:
 func _create_particle() -> Dictionary:
 	## 随机分布在屏幕边缘和中间区域
 	var angle = randf() * TAU
-	var dist = randf_range(400.0, 1800.0)
+	var dist = randf_range(200.0, 900.0)
 	var start_pos = Vector2(CENTER_X + cos(angle) * dist, CENTER_Y + sin(angle) * dist)
 
 	## 花色符号或方块
@@ -94,9 +94,9 @@ func _create_particle() -> Dictionary:
 	var lbl = Label.new()
 	lbl.text = symbols[randi() % symbols.size()]
 	lbl.position = start_pos
-	lbl.add_theme_font_size_override("font_size", randi_range(28, 84))
+	lbl.add_theme_font_size_override("font_size", randi_range(14, 42))
 	lbl.add_theme_color_override("font_color", colors[randi() % colors.size()])
-	lbl.pivot_offset = Vector2(20, 20)
+	lbl.pivot_offset = Vector2(10, 10)
 	vortex_container.add_child(lbl)
 
 	return {
@@ -111,11 +111,11 @@ func _create_particle() -> Dictionary:
 
 func _create_debris() -> Dictionary:
 	var angle = randf() * TAU
-	var dist = randf_range(200.0, 1400.0)
+	var dist = randf_range(100.0, 700.0)
 	var start_pos = Vector2(CENTER_X + cos(angle) * dist, CENTER_Y + sin(angle) * dist)
 
 	var rect = ColorRect.new()
-	var s = randf_range(4, 16)
+	var s = randf_range(2, 8)
 	rect.size = Vector2(s, s)
 	rect.position = start_pos
 	var brightness = randf_range(0.3, 0.9)
@@ -179,7 +179,7 @@ func _process_vortex(delta: float) -> void:
 			node.rotation = timer * p["spin_speed"] * (1.0 + pull_progress * 2.0)
 
 		## 缩放（越近越小）
-		var scale_factor = clampf(current_dist / 600.0, 0.05, 1.5)
+		var scale_factor = clampf(current_dist / 300.0, 0.05, 1.5)
 		node.scale = Vector2(scale_factor, scale_factor)
 
 		## 透明度
@@ -212,7 +212,7 @@ func _create_pixel_grid() -> void:
 		for col in range(GRID_COLS):
 			var rect = ColorRect.new()
 			rect.position = Vector2(col * cell_w, row * cell_h)
-			rect.size = Vector2(cell_w + 2, cell_h + 2)  ## +2 防间隙
+			rect.size = Vector2(cell_w + 1, cell_h + 1)  ## +1 防间隙
 			rect.color = Color(0.0, 0.0, 0.0, 1.0)
 			rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			rect.z_index = 2

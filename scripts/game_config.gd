@@ -8,21 +8,21 @@ extends Node
 const VERSION: String = "V0.085"
 const VERSION_LABEL: String = "V0.085 beta"
 
-## ========== 设计分辨率 (4K) ==========
-const DESIGN_WIDTH: float = 3840.0
-const DESIGN_HEIGHT: float = 2160.0
+## ========== 设计分辨率 (1080p) ==========
+const DESIGN_WIDTH: float = 1920.0
+const DESIGN_HEIGHT: float = 1080.0
 const CENTER_X: float = DESIGN_WIDTH / 2.0
 const CENTER_Y: float = DESIGN_HEIGHT / 2.0
 
-## ========== 布局 Y 坐标 (4K 适配: 原值 ×2) ==========
-const JOKER_Y: float = 350.0
-const JOKER_INFO_Y: float = 550.0
-const PREVIEW_Y: float = 840.0
-const HAND_Y: float = 1500.0
-const BUTTON_Y: float = 1840.0
-const PILE_Y: float = 1880.0
-const DRAW_PILE_POS: Vector2 = Vector2(3560.0, 1880.0)
-const DISCARD_PILE_POS: Vector2 = Vector2(280.0, 1880.0)
+## ========== 布局 Y 坐标 (1080p) ==========
+const JOKER_Y: float = 175.0
+const JOKER_INFO_Y: float = 275.0
+const PREVIEW_Y: float = 420.0
+const HAND_Y: float = 750.0
+const BUTTON_Y: float = 920.0
+const PILE_Y: float = 940.0
+const DRAW_PILE_POS: Vector2 = Vector2(1780.0, 940.0)
+const DISCARD_PILE_POS: Vector2 = Vector2(140.0, 940.0)
 
 ## ========== 游戏平衡性常量 ==========
 const MAX_ANTE: int = 8

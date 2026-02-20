@@ -98,7 +98,7 @@ func _ready() -> void:
 	joker_slot.position = Vector2(GC.CENTER_X, GC.JOKER_Y)
 	draw_pile.position = GC.DRAW_PILE_POS
 	discard_pile.position = GC.DISCARD_PILE_POS
-	consumable_slot.position = Vector2(GC.DESIGN_WIDTH - 260, 400)
+	consumable_slot.position = Vector2(GC.DESIGN_WIDTH - 130, 200)
 
 	## 连接信号
 	hand.hand_changed.connect(_on_hand_changed)

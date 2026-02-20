@@ -1,13 +1,13 @@
 ## joker_slot.gd
-## 小丑牌槽位 UI V3 - 改用 Label 节点解决中文+Emoji 渲染 (4K×2)
+## 小丑牌槽位 UI V3 - 改用 Label 节点解决中文+Emoji 渲染
 extends Node2D
 
 signal joker_hovered(joker_data: JokerData)
 signal joker_unhovered()
 
-const SLOT_WIDTH: float = 260.0
-const SLOT_HEIGHT: float = 340.0
-const SLOT_SPACING: float = 290.0
+const SLOT_WIDTH: float = 130.0
+const SLOT_HEIGHT: float = 170.0
+const SLOT_SPACING: float = 145.0
 var MAX_JOKERS: int = 5
 
 var owned_jokers: Array[JokerData] = []
@@ -97,10 +97,10 @@ func _create_card_labels(x: float, joker: JokerData) -> void:
 	## Emoji 图标
 	var emoji_lbl = Label.new()
 	emoji_lbl.text = joker.emoji
-	emoji_lbl.position = Vector2(x - SLOT_WIDTH / 2, -SLOT_HEIGHT / 2 + 20)
-	emoji_lbl.custom_minimum_size = Vector2(SLOT_WIDTH, 100)
+	emoji_lbl.position = Vector2(x - SLOT_WIDTH / 2, -SLOT_HEIGHT / 2 + 10)
+	emoji_lbl.custom_minimum_size = Vector2(SLOT_WIDTH, 50)
 	emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	emoji_lbl.add_theme_font_size_override("font_size", 72)
+	emoji_lbl.add_theme_font_size_override("font_size", 36)
 	emoji_lbl.add_theme_color_override("font_color", Color.WHITE)
 	emoji_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(emoji_lbl)
@@ -109,10 +109,10 @@ func _create_card_labels(x: float, joker: JokerData) -> void:
 	## 名称
 	var name_lbl = Label.new()
 	name_lbl.text = loc.t(joker.joker_name)
-	name_lbl.position = Vector2(x - SLOT_WIDTH / 2 + 6, SLOT_HEIGHT / 2 - 84)
-	name_lbl.custom_minimum_size = Vector2(SLOT_WIDTH - 12, 0)
+	name_lbl.position = Vector2(x - SLOT_WIDTH / 2 + 3, SLOT_HEIGHT / 2 - 42)
+	name_lbl.custom_minimum_size = Vector2(SLOT_WIDTH - 6, 0)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 24)
+	name_lbl.add_theme_font_size_override("font_size", 12)
 	name_lbl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.8))
 	name_lbl.clip_text = true
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -124,10 +124,10 @@ func _create_card_labels(x: float, joker: JokerData) -> void:
 	## 效果描述
 	var desc_lbl = Label.new()
 	desc_lbl.text = loc.t(joker.description)
-	desc_lbl.position = Vector2(x - SLOT_WIDTH / 2 + 6, SLOT_HEIGHT / 2 - 44)
-	desc_lbl.custom_minimum_size = Vector2(SLOT_WIDTH - 12, 0)
+	desc_lbl.position = Vector2(x - SLOT_WIDTH / 2 + 3, SLOT_HEIGHT / 2 - 22)
+	desc_lbl.custom_minimum_size = Vector2(SLOT_WIDTH - 6, 0)
 	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_lbl.add_theme_font_size_override("font_size", 20)
+	desc_lbl.add_theme_font_size_override("font_size", 10)
 	desc_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.55))
 	desc_lbl.clip_text = true
 	desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -146,7 +146,7 @@ func _draw() -> void:
 	for i in range(MAX_JOKERS):
 		var x = _get_slot_x(i)
 		var rect = Rect2(x - SLOT_WIDTH / 2, -SLOT_HEIGHT / 2, SLOT_WIDTH, SLOT_HEIGHT)
-		draw_rect(rect, Color(0.15, 0.2, 0.18, 0.4), false, 3.0)
+		draw_rect(rect, Color(0.15, 0.2, 0.18, 0.4), false, 1.5)
 
 	## 画拥有的小丑牌卡片背景/边框/发光（文字由 Label 节点负责）
 	for i in range(owned_jokers.size()):
@@ -166,11 +166,11 @@ func _draw_joker_card_bg(x: float, joker: JokerData, index: int) -> void:
 	if is_triggered:
 		var t = trigger_timers[index]
 		var glow_alpha = sin((t / 0.6) * PI) * 0.5
-		var glow_rect = Rect2(rect.position - Vector2(12, 12), rect.size + Vector2(24, 24))
+		var glow_rect = Rect2(rect.position - Vector2(6, 6), rect.size + Vector2(12, 12))
 		draw_rect(glow_rect, Color(1.0, 0.85, 0.3, glow_alpha))
 
 	## 阴影
-	draw_rect(Rect2(rect.position + Vector2(6, 6), rect.size), Color(0, 0, 0, 0.3))
+	draw_rect(Rect2(rect.position + Vector2(3, 3), rect.size), Color(0, 0, 0, 0.3))
 
 	## 背景
 	var bg_color = Color(0.12, 0.15, 0.2)
@@ -180,7 +180,7 @@ func _draw_joker_card_bg(x: float, joker: JokerData, index: int) -> void:
 
 	## 稀有度边框
 	var rarity_color = joker.get_rarity_color()
-	draw_rect(rect, rarity_color, false, 5.0)
+	draw_rect(rect, rarity_color, false, 2.5)
 
 func _on_joker_hover(index: int) -> void:
 	if index < owned_jokers.size():
