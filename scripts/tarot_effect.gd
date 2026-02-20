@@ -204,7 +204,8 @@ static func _add_seal(cards: Array, seal: int, emoji: String, loc: Loc) -> Dicti
 	card.card_data.seal = seal
 	card.is_selected = false
 	card.queue_redraw()
-	var seal_name = CardData.get_seal_name(seal)
+	## 使用实例方法获取印名
+	var seal_name = card.card_data.get_seal_name()
 	return {
 		"message": emoji + " " + loc.t(seal_name) + "! " + card.card_data.get_display_name(),
 		"color": Color(0.3, 0.8, 0.6),
