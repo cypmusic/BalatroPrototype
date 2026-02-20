@@ -114,7 +114,7 @@ func _generate_shop_items() -> void:
 			if tarots.size() > 0:
 				shop_consumables.append({"type": "tarot", "data": tarots[0]})
 	## 生成一张未拥有的 Voucher
-	shop_voucher = VoucherDatabase.get_random_voucher(owned_voucher_ids)
+	shop_voucher = VoucherDatabase.get_available_voucher(owned_voucher_ids)
 
 func _process(delta: float) -> void:
 	if not visible:

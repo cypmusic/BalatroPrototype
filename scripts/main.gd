@@ -245,7 +245,7 @@ func _on_title_start_game() -> void:
 
 func _open_blind_select() -> void:
 	if GS.ante_boss == null:
-		GS.ante_boss = BlindData.get_random_boss(GS.used_boss_names)
+		GS.ante_boss = BlindData.get_random_boss(GS.current_ante, GS.used_boss_names)
 		GS.used_boss_names.append(GS.ante_boss.name)
 	blind_select.open_select(GS.current_ante, GS.blind_index, GS.ante_boss)
 
@@ -846,7 +846,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F2:
 			GS.current_ante = GC.MAX_ANTE
 			GS.blind_index = 2
-			GS.ante_boss = BlindData.get_random_boss(GS.used_boss_names)
+			GS.ante_boss = BlindData.get_random_boss(GS.current_ante, GS.used_boss_names)
 			shop.visible = false
 			blind_select.visible = false
 			round_result.visible = false
