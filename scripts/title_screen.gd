@@ -99,6 +99,7 @@ func _build_ui() -> void:
 	title_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.3))
 	title_label.z_index = 5
 	title_label.modulate.a = 0.0
+	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(title_label)
 
 	sub_label = Label.new()
@@ -110,6 +111,7 @@ func _build_ui() -> void:
 	sub_label.add_theme_color_override("font_color", Color(0.6, 0.65, 0.55))
 	sub_label.z_index = 5
 	sub_label.modulate.a = 0.0
+	sub_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(sub_label)
 
 	start_button = Button.new()
@@ -131,6 +133,7 @@ func _build_ui() -> void:
 	version_label.add_theme_color_override("font_color", Color(0.35, 0.35, 0.3))
 	version_label.z_index = 5
 	version_label.modulate.a = 0.0
+	version_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(version_label)
 
 ## ========== 扇形牌（5张真实扑克牌）==========
@@ -179,6 +182,7 @@ func _build_fan_cards() -> void:
 		center_suit.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		center_suit.add_theme_font_size_override("font_size", 44)
 		center_suit.add_theme_color_override("font_color", suit_colors[i])
+		center_suit.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		pivot.add_child(center_suit)
 
 		## 左上 Rank
@@ -187,6 +191,7 @@ func _build_fan_cards() -> void:
 		rank_lbl.position = Vector2(-FAN_CARD_W / 2 + 8, -FAN_CARD_H + 5)
 		rank_lbl.add_theme_font_size_override("font_size", 16)
 		rank_lbl.add_theme_color_override("font_color", suit_colors[i])
+		rank_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		pivot.add_child(rank_lbl)
 
 		## 左上小花色
@@ -195,6 +200,7 @@ func _build_fan_cards() -> void:
 		small_suit.position = Vector2(-FAN_CARD_W / 2 + 8, -FAN_CARD_H + 22)
 		small_suit.add_theme_font_size_override("font_size", 12)
 		small_suit.add_theme_color_override("font_color", suit_colors[i])
+		small_suit.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		pivot.add_child(small_suit)
 
 		## 右下 Rank（倒转）
@@ -203,6 +209,7 @@ func _build_fan_cards() -> void:
 		rank_lbl2.position = Vector2(FAN_CARD_W / 2 - 24, -20)
 		rank_lbl2.add_theme_font_size_override("font_size", 16)
 		rank_lbl2.add_theme_color_override("font_color", suit_colors[i])
+		rank_lbl2.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		pivot.add_child(rank_lbl2)
 
 		## 初始隐藏

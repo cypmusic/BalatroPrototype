@@ -26,6 +26,7 @@ const CONFETTI_COLORS = [
 
 ## 字体辅助
 func _f(lbl: Label) -> void:
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var font = Loc.i().cn_font
 	if font:
 		lbl.add_theme_font_override("font", font)

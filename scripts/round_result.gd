@@ -16,7 +16,9 @@ var income: int = 0
 var blind_name: String = ""
 
 func _t(key: String) -> String: return Loc.i().t(key)
-func _af(lbl: Label, s: int = -1) -> void: Loc.i().apply_font_to_label(lbl, s)
+func _af(lbl: Label, s: int = -1) -> void:
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Loc.i().apply_font_to_label(lbl, s)
 func _afb(btn: Button, s: int = -1) -> void: Loc.i().apply_font_to_button(btn, s)
 
 func _ready() -> void:
