@@ -9,26 +9,26 @@ signal continue_game()
 signal return_to_title()
 signal language_changed()
 
-const SCREEN_W: float = 3840.0
-const SCREEN_H: float = 2160.0
+const SCREEN_W: float = 1920.0
+const SCREEN_H: float = 1080.0
 const CENTER_X: float = SCREEN_W / 2.0
 const CENTER_Y: float = SCREEN_H / 2.0
 
-const MENU_W: float = 1000.0
-const MENU_H: float = 1400.0
-const BTN_W: float = 720.0
-const BTN_H: float = 104.0
-const BTN_SPACING: float = 128.0
+const MENU_W: float = 500.0
+const MENU_H: float = 700.0
+const BTN_W: float = 360.0
+const BTN_H: float = 52.0
+const BTN_SPACING: float = 64.0
 
 ## Title 模式面板 (居中偏下，窄长)
-const TITLE_PANEL_W: float = 700.0
-const TITLE_PANEL_H: float = 1030.0
-const TITLE_PANEL_BOTTOM_MARGIN: float = 580.0
+const TITLE_PANEL_W: float = 350.0
+const TITLE_PANEL_H: float = 515.0
+const TITLE_PANEL_BOTTOM_MARGIN: float = 290.0
 
 ## 收藏页大面板常量
-const COLL_W: float = 3000.0
-const COLL_H: float = 1700.0
-const TOOLTIP_W: float = 640.0
+const COLL_W: float = 1500.0
+const COLL_H: float = 850.0
+const TOOLTIP_W: float = 320.0
 
 enum MenuMode { TITLE, PAUSE }
 var mode: MenuMode = MenuMode.PAUSE
@@ -129,11 +129,11 @@ func _build_main_menu() -> void:
 
 	if mode == MenuMode.PAUSE:
 		add_child(_make_label(_t("PAUSED"),
-			Vector2(pr.position.x, pr.position.y + 40),
-			84, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
+			Vector2(pr.position.x, pr.position.y + 20),
+			42, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
 		var line = ColorRect.new()
-		line.position = Vector2(CENTER_X - 240, pr.position.y + 156)
-		line.size = Vector2(480, 4)
+		line.position = Vector2(CENTER_X - 120, pr.position.y + 78)
+		line.size = Vector2(240, 2)
 		line.color = Color(0.95, 0.85, 0.3, 0.4)
 		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(line)
@@ -166,21 +166,21 @@ func _build_main_menu() -> void:
 	var btn_count = buttons.size()
 	var total_btn_h = btn_count * BTN_H + (btn_count - 1) * (BTN_SPACING - BTN_H)
 	var panel_cx = pr.position.x + pr.size.x / 2.0
-	var cur_btn_w = min(BTN_W, pr.size.x - 80)
+	var cur_btn_w = min(BTN_W, pr.size.x - 40)
 	var start_y: float
 	if mode == MenuMode.PAUSE:
-		start_y = pr.position.y + 220
+		start_y = pr.position.y + 110
 	else:
 		start_y = pr.position.y + (pr.size.y - total_btn_h) / 2.0
 
 	for i in range(btn_count):
 		add_child(_make_button(buttons[i]["text"],
 			Vector2(panel_cx - cur_btn_w / 2, start_y + i * BTN_SPACING),
-			44, cur_btn_w, BTN_H, buttons[i]["callback"]))
+			22, cur_btn_w, BTN_H, buttons[i]["callback"]))
 
 	add_child(_make_label(GameConfig.VERSION_LABEL,
-		Vector2(pr.position.x, pr.position.y + pr.size.y - 80),
-		24, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
+		Vector2(pr.position.x, pr.position.y + pr.size.y - 40),
+		12, Color(0.4, 0.4, 0.35), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
 
 func _on_continue() -> void:
 	visible = false; continue_game.emit()
@@ -202,8 +202,8 @@ func _open_settings() -> void:
 	_add_sub_header(_t("SETTINGS"), pr)
 
 	## 内容区域：标题下方到返回按钮上方
-	var content_top = pr.position.y + 200
-	var content_bottom = pr.position.y + pr.size.y - 160
+	var content_top = pr.position.y + 100
+	var content_bottom = pr.position.y + pr.size.y - 80
 	var content_h = content_bottom - content_top
 
 	var cats = [
@@ -217,31 +217,31 @@ func _open_settings() -> void:
 
 	for ci in range(cats.size()):
 		var y = content_top + ci * item_spacing
-		add_child(_make_label(cats[ci]["label"], Vector2(CENTER_X - 360, y), 36, Color(0.85, 0.85, 0.8)))
+		add_child(_make_label(cats[ci]["label"], Vector2(CENTER_X - 180, y), 18, Color(0.85, 0.85, 0.8)))
 
 		var slider = HSlider.new()
 		slider.min_value = 0.0; slider.max_value = 1.0; slider.step = 0.05
 		slider.value = cats[ci]["value"]
-		slider.position = Vector2(CENTER_X - 360, y + 50)
-		slider.custom_minimum_size = Vector2(720, 40)
+		slider.position = Vector2(CENTER_X - 180, y + 25)
+		slider.custom_minimum_size = Vector2(360, 20)
 		var idx = ci
 		slider.value_changed.connect(func(v): _on_volume_changed(idx, v))
 		add_child(slider)
 
 		var val_lbl = _make_label(str(int(cats[ci]["value"] * 100)) + "%",
-			Vector2(CENTER_X + 400, y + 44), 32, Color(0.95, 0.85, 0.3))
+			Vector2(CENTER_X + 200, y + 22), 16, Color(0.95, 0.85, 0.3))
 		val_lbl.name = "VolLabel" + str(ci)
 		add_child(val_lbl)
 
 	var lang_y = content_top + 3 * item_spacing
-	add_child(_make_label(_t("Language"), Vector2(CENTER_X - 360, lang_y), 36, Color(0.85, 0.85, 0.8)))
+	add_child(_make_label(_t("Language"), Vector2(CENTER_X - 180, lang_y), 18, Color(0.85, 0.85, 0.8)))
 	var lang_btn = _make_button("  " + _loc().current_language + "  ▼",
-		Vector2(CENTER_X - 360, lang_y + 50), 32, 400, 72, _cycle_language)
+		Vector2(CENTER_X - 180, lang_y + 25), 16, 200, 36, _cycle_language)
 	lang_btn.z_index = 1  ## 确保在滑块之上
 	add_child(lang_btn)
 
 	add_child(_make_label(_t("Graphics settings coming soon..."),
-		Vector2(CENTER_X - 360, content_top + 4 * item_spacing), 28, Color(0.5, 0.5, 0.45)))
+		Vector2(CENTER_X - 180, content_top + 4 * item_spacing), 14, Color(0.5, 0.5, 0.45)))
 	_add_back_button(pr)
 
 func _on_volume_changed(index: int, value: float) -> void:
@@ -302,14 +302,14 @@ func _open_collection() -> void:
 	var panel_top = CENTER_Y - COLL_H / 2.0
 
 	## — 分类标签按钮 —
-	var tab_y = panel_top + 120
+	var tab_y = panel_top + 60
 	var tabs = [
 		{"label": "🐉 " + _t("Beast Cards"), "tab": CollTab.BEASTS, "color": Color(0.3, 0.9, 0.4)},
 		{"label": "⭐ " + _t("Constellation Cards"), "tab": CollTab.CONSTELLATIONS, "color": Color(0.2, 0.55, 0.85)},
 		{"label": "🔮 " + _t("Artifact Cards"), "tab": CollTab.ARTIFACTS, "color": Color(0.7, 0.35, 0.75)},
 	]
-	var tab_w = 420.0
-	var tab_gap = 24.0
+	var tab_w = 210.0
+	var tab_gap = 12.0
 	var tab_total = tabs.size() * tab_w + (tabs.size() - 1) * tab_gap
 	var tab_start_x = CENTER_X - tab_total / 2.0
 	for i in range(tabs.size()):
@@ -318,8 +318,8 @@ func _open_collection() -> void:
 		var btn = Button.new()
 		btn.text = tabs[i]["label"]
 		btn.position = Vector2(tx, tab_y)
-		btn.custom_minimum_size = Vector2(tab_w, 64)
-		_loc().apply_font_to_button(btn, 28)
+		btn.custom_minimum_size = Vector2(tab_w, 32)
+		_loc().apply_font_to_button(btn, 14)
 		if is_active:
 			btn.add_theme_color_override("font_color", tabs[i]["color"])
 		else:
@@ -329,10 +329,10 @@ func _open_collection() -> void:
 		add_child(btn)
 
 	## — 网格内容区域（无滚动）—
-	var content_top = tab_y + 84
-	var content_bottom = CENTER_Y + COLL_H / 2.0 - 110  ## 返回按钮上方
-	var content_left = panel_left + 40
-	var content_w = COLL_W - 80
+	var content_top = tab_y + 42
+	var content_bottom = CENTER_Y + COLL_H / 2.0 - 55  ## 返回按钮上方
+	var content_left = panel_left + 20
+	var content_w = COLL_W - 40
 
 	match coll_tab:
 		CollTab.BEASTS:
@@ -365,7 +365,7 @@ func _add_coll_bg() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 
-	var bw = 4.0; var bc = Color(0.95, 0.85, 0.3, 0.35)
+	var bw = 2.0; var bc = Color(0.95, 0.85, 0.3, 0.35)
 	for edge in [
 		[Vector2(px, py), Vector2(COLL_W, bw)],
 		[Vector2(px, py + COLL_H - bw), Vector2(COLL_W, bw)],
@@ -379,18 +379,18 @@ func _add_coll_bg() -> void:
 
 func _add_coll_header(text: String) -> void:
 	var py = CENTER_Y - COLL_H / 2.0
-	add_child(_make_label(text, Vector2(CENTER_X - COLL_W / 2.0, py + 28),
-		72, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, COLL_W))
+	add_child(_make_label(text, Vector2(CENTER_X - COLL_W / 2.0, py + 14),
+		36, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, COLL_W))
 	var line = ColorRect.new()
-	line.position = Vector2(CENTER_X - 300, py + 108)
-	line.size = Vector2(600, 4); line.color = Color(0.95, 0.85, 0.3, 0.3)
+	line.position = Vector2(CENTER_X - 150, py + 54)
+	line.size = Vector2(300, 2); line.color = Color(0.95, 0.85, 0.3, 0.3)
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(line)
 
 func _add_coll_back_button() -> void:
-	var by = CENTER_Y + COLL_H / 2.0 - 100
+	var by = CENTER_Y + COLL_H / 2.0 - 50
 	add_child(_make_button("  ← " + _t("Back") + "  ",
-		Vector2(CENTER_X - 180, by), 36, 360, 80,
+		Vector2(CENTER_X - 90, by), 18, 180, 40,
 		func(): _build_main_menu()))
 
 ## ---------- 异兽网格 (垂直两端对齐) ----------
@@ -418,8 +418,8 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> 
 
 	var cols = 9
 	var cell_w = total_w / cols
-	var hdr_h = 44.0      ## 四象标题行高度
-	var box_pad = 10.0    ## 边框内边距
+	var hdr_h = 22.0      ## 四象标题行高度
+	var box_pad = 5.0    ## 边框内边距
 
 	var sx_order = [
 		CardLore.SiXiang.AZURE_DRAGON,
@@ -433,11 +433,11 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> 
 	for sx in sx_order:
 		total_rows += ceili(float(sx_groups[sx].size()) / cols)
 	## 4组标题 + 所有数据行 的最小高度
-	var min_cell_h = 46.0
+	var min_cell_h = 23.0
 	var min_content_h = 4 * (hdr_h + box_pad * 2) + total_rows * min_cell_h
 	var available_h = y_bottom - y0
 	## 计算实际 cell_h 和 group_gap 来填满可用空间
-	var group_gap = 20.0
+	var group_gap = 10.0
 	var total_fixed = 4 * (hdr_h + box_pad * 2) + 3 * group_gap  ## 4个标题区 + 3个间距
 	var remaining = available_h - total_fixed
 	var cell_h = remaining / total_rows if total_rows > 0 else min_cell_h
@@ -457,7 +457,7 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> 
 
 		## 四象标题（居中 + 放大字体）
 		var hdr_text = info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]) + " " + info["suit_cn"]
-		var hdr = _make_label(hdr_text, Vector2(x0 - box_pad, cur_y + 4), 32, info["color"],
+		var hdr = _make_label(hdr_text, Vector2(x0 - box_pad, cur_y + 2), 16, info["color"],
 			HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2)
 		add_child(hdr)
 		cur_y += hdr_h
@@ -474,9 +474,9 @@ func _fill_beast_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> 
 			var lbl = Label.new()
 			lbl.text = joker.emoji + " " + _t(joker.joker_name)
 			lbl.position = Vector2(lx, ly)
-			lbl.custom_minimum_size = Vector2(cell_w - 8, cell_h - 4)
+			lbl.custom_minimum_size = Vector2(cell_w - 4, cell_h - 2)
 			lbl.add_theme_color_override("font_color", c)
-			_loc().apply_font_to_label(lbl, 24)
+			_loc().apply_font_to_label(lbl, 12)
 			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 			var j_ref = joker
 			var l_ref = lbl
@@ -500,17 +500,17 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: fl
 	]
 
 	var cols = 7
-	var label_w = 260.0   ## 左侧四象标签宽度
+	var label_w = 130.0   ## 左侧四象标签宽度
 	var cell_w = (total_w - label_w) / cols
-	var box_pad = 12.0
+	var box_pad = 6.0
 
 	## 计算垂直两端对齐：4组，均匀分布
 	var group_count = sx_map.size()
 	var available_h = y_bottom - y0
 	## 每组高度 = 可用高度 / 组数（包含间距）
 	var group_total_h = available_h / group_count
-	var row_h = group_total_h - box_pad * 2 - 8  ## 留出边框内边距和间距
-	row_h = maxf(row_h, 60.0)
+	var row_h = group_total_h - box_pad * 2 - 4  ## 留出边框内边距和间距
+	row_h = maxf(row_h, 30.0)
 	var box_h = row_h + box_pad * 2
 
 	var cur_y = y0
@@ -526,7 +526,7 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: fl
 		## 四象标签（居中大字）
 		add_child(_make_label(
 			info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]),
-			Vector2(x0, cur_y + box_pad), 30, info["color"],
+			Vector2(x0, cur_y + box_pad), 15, info["color"],
 			HORIZONTAL_ALIGNMENT_CENTER, label_w))
 
 		## 该组7个星宿
@@ -538,10 +538,10 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: fl
 			var lx = x0 + label_w + ci * cell_w
 			var lbl = Label.new()
 			lbl.text = planet.emoji + " " + _t(planet.planet_name)
-			lbl.position = Vector2(lx, cur_y + box_pad - 2)
-			lbl.custom_minimum_size = Vector2(cell_w - 8, row_h / 2.0)
+			lbl.position = Vector2(lx, cur_y + box_pad - 1)
+			lbl.custom_minimum_size = Vector2(cell_w - 4, row_h / 2.0)
 			lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.7))
-			_loc().apply_font_to_label(lbl, 26)
+			_loc().apply_font_to_label(lbl, 13)
 			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 			var p_ref = planet
 			var l_ref = lbl
@@ -552,9 +552,9 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: fl
 			## 牌型名 (第二行)
 			var sub = Label.new()
 			sub.text = "→ " + hand_name
-			sub.position = Vector2(lx + 16, cur_y + box_pad + 30)
+			sub.position = Vector2(lx + 8, cur_y + box_pad + 15)
 			sub.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
-			_loc().apply_font_to_label(sub, 20)
+			_loc().apply_font_to_label(sub, 10)
 			sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			add_child(sub)
 
@@ -573,8 +573,8 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 			formations.append(t)
 
 	var available_h = y_bottom - y0
-	var box_pad = 12.0
-	var gap_between = 30.0
+	var box_pad = 6.0
+	var gap_between = 15.0
 
 	## 计算行数
 	var relic_cols = 8
@@ -584,10 +584,10 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 
 	## 两个 section 按比例分配高度
 	var total_data_rows = relic_rows + form_rows
-	var fixed_h = 2 * (48.0 + box_pad * 2) + gap_between  ## 两个标题区 + 间距
+	var fixed_h = 2 * (24.0 + box_pad * 2) + gap_between  ## 两个标题区 + 间距
 	var remaining_h = available_h - fixed_h
-	var cell_h = remaining_h / total_data_rows if total_data_rows > 0 else 54.0
-	cell_h = maxf(cell_h, 54.0)
+	var cell_h = remaining_h / total_data_rows if total_data_rows > 0 else 27.0
+	cell_h = maxf(cell_h, 27.0)
 
 	var relic_cell_w = total_w / relic_cols
 	var form_cell_w = total_w / form_cols
@@ -595,13 +595,13 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 	var cur_y = y0
 
 	## — 神器 —
-	var relic_box_h = 48.0 + relic_rows * cell_h + box_pad * 2
+	var relic_box_h = 24.0 + relic_rows * cell_h + box_pad * 2
 	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, relic_box_h), Color(0.7, 0.35, 0.75, 0.3))
 
 	add_child(_make_label("⚱️ " + _t("Relics") + " (" + str(relics.size()) + ")",
-		Vector2(x0 - box_pad, cur_y + 8), 32, Color(0.7, 0.35, 0.75),
+		Vector2(x0 - box_pad, cur_y + 4), 16, Color(0.7, 0.35, 0.75),
 		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
-	cur_y += 48
+	cur_y += 24
 
 	for i in range(relics.size()):
 		var tarot = relics[i]
@@ -612,9 +612,9 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 		var lbl = Label.new()
 		lbl.text = tarot.emoji + " " + _t(tarot.tarot_name)
 		lbl.position = Vector2(lx, ly)
-		lbl.custom_minimum_size = Vector2(relic_cell_w - 8, cell_h - 4)
+		lbl.custom_minimum_size = Vector2(relic_cell_w - 4, cell_h - 2)
 		lbl.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-		_loc().apply_font_to_label(lbl, 26)
+		_loc().apply_font_to_label(lbl, 13)
 		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 		var t_ref = tarot
 		var l_ref = lbl
@@ -625,13 +625,13 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 	cur_y += relic_rows * cell_h + box_pad + gap_between
 
 	## — 阵法 —
-	var form_box_h = 48.0 + form_rows * cell_h + box_pad * 2
+	var form_box_h = 24.0 + form_rows * cell_h + box_pad * 2
 	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, form_box_h), Color(0.85, 0.25, 0.25, 0.3))
 
 	add_child(_make_label("⚔️ " + _t("Formations") + " (" + str(formations.size()) + ")",
-		Vector2(x0 - box_pad, cur_y + 8), 32, Color(0.85, 0.25, 0.25),
+		Vector2(x0 - box_pad, cur_y + 4), 16, Color(0.85, 0.25, 0.25),
 		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
-	cur_y += 48
+	cur_y += 24
 
 	for i in range(formations.size()):
 		var tarot = formations[i]
@@ -642,9 +642,9 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 		var lbl = Label.new()
 		lbl.text = tarot.emoji + " " + _t(tarot.tarot_name)
 		lbl.position = Vector2(lx, ly)
-		lbl.custom_minimum_size = Vector2(form_cell_w - 8, cell_h - 4)
+		lbl.custom_minimum_size = Vector2(form_cell_w - 4, cell_h - 2)
 		lbl.add_theme_color_override("font_color", Color(0.85, 0.25, 0.25))
-		_loc().apply_font_to_label(lbl, 26)
+		_loc().apply_font_to_label(lbl, 13)
 		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 		var t_ref = tarot
 		var l_ref = lbl
@@ -657,11 +657,11 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 func _show_card_tooltip(anchor: Label, rows: Array) -> void:
 	_hide_card_tooltip()
 	## 计算位置：anchor 右侧，屏幕越界则翻到左侧
-	var ax = anchor.global_position.x + anchor.size.x + 16
+	var ax = anchor.global_position.x + anchor.size.x + 8
 	var ay = anchor.global_position.y
-	if ax + TOOLTIP_W > SCREEN_W - 40:
-		ax = anchor.global_position.x - TOOLTIP_W - 16
-	if ay < 40: ay = 40
+	if ax + TOOLTIP_W > SCREEN_W - 20:
+		ax = anchor.global_position.x - TOOLTIP_W - 8
+	if ay < 20: ay = 20
 
 	var panel = ColorRect.new()
 	panel.z_index = 260
@@ -669,13 +669,13 @@ func _show_card_tooltip(anchor: Label, rows: Array) -> void:
 	panel.color = Color(0.04, 0.06, 0.05, 0.96)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var bw = 3.0
+	var bw = 1.5
 	var bc_color = Color(0.95, 0.85, 0.3, 0.4)
 
-	var row_y = 14.0
-	var pad_x = 16.0
-	var label_w = 150.0
-	var value_w = TOOLTIP_W - label_w - pad_x * 2 - 10
+	var row_y = 7.0
+	var pad_x = 8.0
+	var label_w = 75.0
+	var value_w = TOOLTIP_W - label_w - pad_x * 2 - 5
 
 	for r in rows:
 		var is_header = r.get("header", false)
@@ -684,11 +684,11 @@ func _show_card_tooltip(anchor: Label, rows: Array) -> void:
 		if is_divider:
 			var div = ColorRect.new()
 			div.position = Vector2(pad_x, row_y)
-			div.size = Vector2(TOOLTIP_W - pad_x * 2, 2)
+			div.size = Vector2(TOOLTIP_W - pad_x * 2, 1)
 			div.color = Color(0.95, 0.85, 0.3, 0.15)
 			div.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			panel.add_child(div)
-			row_y += 8
+			row_y += 4
 			continue
 
 		if is_header:
@@ -698,10 +698,10 @@ func _show_card_tooltip(anchor: Label, rows: Array) -> void:
 			h_lbl.custom_minimum_size = Vector2(TOOLTIP_W - pad_x * 2, 0)
 			h_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			h_lbl.add_theme_color_override("font_color", r.get("color", Color(0.95, 0.85, 0.3)))
-			_loc().apply_font_to_label(h_lbl, r.get("size", 28))
+			_loc().apply_font_to_label(h_lbl, r.get("size", 14))
 			h_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			panel.add_child(h_lbl)
-			row_y += r.get("size", 28) + 10
+			row_y += r.get("size", 14) + 5
 			continue
 
 		## 普通键值行
@@ -710,32 +710,32 @@ func _show_card_tooltip(anchor: Label, rows: Array) -> void:
 		k_lbl.position = Vector2(pad_x, row_y)
 		k_lbl.custom_minimum_size = Vector2(label_w, 0)
 		k_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.55))
-		_loc().apply_font_to_label(k_lbl, 20)
+		_loc().apply_font_to_label(k_lbl, 10)
 		k_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.add_child(k_lbl)
 
 		var v_lbl = Label.new()
 		v_lbl.text = r.get("value", "")
-		v_lbl.position = Vector2(pad_x + label_w + 10, row_y)
+		v_lbl.position = Vector2(pad_x + label_w + 5, row_y)
 		v_lbl.custom_minimum_size = Vector2(value_w, 0)
 		v_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		v_lbl.add_theme_color_override("font_color", r.get("color", Color(0.85, 0.85, 0.8)))
-		_loc().apply_font_to_label(v_lbl, r.get("size", 20))
+		_loc().apply_font_to_label(v_lbl, r.get("size", 10))
 		v_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.add_child(v_lbl)
 
 		## 估算行高（多行文本）
 		var text_len = r.get("value", "").length()
-		var approx_chars_per_line = int(value_w / 14)
+		var approx_chars_per_line = int(value_w / 7)
 		var line_count = maxi(1, ceili(float(text_len) / approx_chars_per_line))
-		row_y += line_count * 26 + 6
+		row_y += line_count * 13 + 3
 
 	## 设置面板大小
-	var total_h = row_y + 14
+	var total_h = row_y + 7
 	## 确保不超出屏幕底部
-	if ay + total_h > SCREEN_H - 20:
-		ay = SCREEN_H - 20 - total_h
-		if ay < 20: ay = 20
+	if ay + total_h > SCREEN_H - 10:
+		ay = SCREEN_H - 10 - total_h
+		if ay < 10: ay = 10
 		panel.position.y = ay
 	panel.size = Vector2(TOOLTIP_W, total_h)
 
@@ -780,13 +780,13 @@ func _show_beast_tooltip(joker: JokerData, anchor: Label) -> void:
 	var display_name = _t(joker.joker_name)
 
 	var rows: Array = [
-		{"header": true, "value": joker.emoji + " " + display_name, "color": rarity_colors.get(joker.rarity, Color.WHITE), "size": 28},
+		{"header": true, "value": joker.emoji + " " + display_name, "color": rarity_colors.get(joker.rarity, Color.WHITE), "size": 14},
 		{"divider": true},
 		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] + " (" + sx_info["element_cn"] + ")" if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
 		{"label": _t("Rarity"), "value": rarity_emojis.get(joker.rarity, "") + " " + _t(rarity_names.get(joker.rarity, "?")), "color": rarity_colors.get(joker.rarity, Color.WHITE)},
 		{"label": _t("Effect Type"), "value": cat_emoji + " " + cat_name},
 		{"divider": true},
-		{"label": _t("Lore"), "value": lore["lore_cn"] if is_cn else lore["lore_en"], "size": 18},
+		{"label": _t("Lore"), "value": lore["lore_cn"] if is_cn else lore["lore_en"], "size": 9},
 		{"divider": true},
 		{"label": _t("Description"), "value": _t(joker.description) if is_cn else joker.description},
 	]
@@ -817,7 +817,7 @@ func _show_constellation_tooltip(planet: PlanetData, anchor: Label) -> void:
 	var level_str = "Lv." + str(level_info.get("level", 1))
 
 	var rows: Array = [
-		{"header": true, "value": planet.emoji + " " + _t(planet.planet_name), "color": sx_info["color"], "size": 28},
+		{"header": true, "value": planet.emoji + " " + _t(planet.planet_name), "color": sx_info["color"], "size": 14},
 		{"divider": true},
 		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
 		{"label": _t("Hand Type"), "value": hand_name},
@@ -836,7 +836,7 @@ func _show_artifact_tooltip(tarot: TarotData, anchor: Label) -> void:
 	var type_color = tarot.get_rarity_color()
 
 	var rows: Array = [
-		{"header": true, "value": tarot.emoji + " " + _t(tarot.tarot_name), "color": type_color, "size": 28},
+		{"header": true, "value": tarot.emoji + " " + _t(tarot.tarot_name), "color": type_color, "size": 14},
 		{"divider": true},
 		{"label": _t("Type"), "value": type_name, "color": type_color},
 		{"label": _t("Cost"), "value": "$" + str(tarot.cost), "color": Color(0.95, 0.8, 0.2)},
@@ -854,8 +854,8 @@ func _open_tutorial() -> void:
 	var pr = _get_panel_rect()
 	_add_sub_header(_t("HOW TO PLAY"), pr)
 
-	var content_top = pr.position.y + 200
-	var content_bottom = pr.position.y + pr.size.y - 160
+	var content_top = pr.position.y + 100
+	var content_bottom = pr.position.y + pr.size.y - 80
 	var content_h = content_bottom - content_top
 
 	var tuts = [
@@ -873,8 +873,8 @@ func _open_tutorial() -> void:
 	var item_spacing = content_h / tuts.size()
 	for i in range(tuts.size()):
 		var y = content_top + i * item_spacing
-		add_child(_make_label(tuts[i][0], Vector2(CENTER_X - 440, y), 32, Color(0.95, 0.85, 0.3)))
-		add_child(_make_label(tuts[i][1], Vector2(CENTER_X - 440, y + 40), 24, Color(0.65, 0.65, 0.6)))
+		add_child(_make_label(tuts[i][0], Vector2(CENTER_X - 220, y), 16, Color(0.95, 0.85, 0.3)))
+		add_child(_make_label(tuts[i][1], Vector2(CENTER_X - 220, y + 20), 12, Color(0.65, 0.65, 0.6)))
 	_add_back_button(pr)
 
 func _on_quit() -> void:
@@ -891,7 +891,7 @@ func _draw_section_box(pos: Vector2, box_size: Vector2, border_color: Color) -> 
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	## 四边细边框
-	var bw = 2.0
+	var bw = 1.0
 	for edge in [
 		[Vector2(pos.x, pos.y), Vector2(box_size.x, bw)],                           ## top
 		[Vector2(pos.x, pos.y + box_size.y - bw), Vector2(box_size.x, bw)],         ## bottom
@@ -922,7 +922,7 @@ func _add_bg() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 
-	var bw = 4.0; var bc = Color(0.95, 0.85, 0.3, 0.3)
+	var bw = 2.0; var bc = Color(0.95, 0.85, 0.3, 0.3)
 	for edge in [
 		[Vector2(pr.position.x, pr.position.y), Vector2(pr.size.x, bw)],
 		[Vector2(pr.position.x, pr.position.y + pr.size.y - bw), Vector2(pr.size.x, bw)],
@@ -936,16 +936,16 @@ func _add_bg() -> void:
 
 ## 子面板标题（自适应面板位置）
 func _add_sub_header(text: String, pr: Rect2) -> void:
-	add_child(_make_label(text, Vector2(pr.position.x, pr.position.y + 40),
-		72, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
+	add_child(_make_label(text, Vector2(pr.position.x, pr.position.y + 20),
+		36, Color(0.95, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, pr.size.x))
 	var line = ColorRect.new()
-	line.position = Vector2(CENTER_X - 200, pr.position.y + 136)
-	line.size = Vector2(400, 4); line.color = Color(0.95, 0.85, 0.3, 0.3)
+	line.position = Vector2(CENTER_X - 100, pr.position.y + 68)
+	line.size = Vector2(200, 2); line.color = Color(0.95, 0.85, 0.3, 0.3)
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(line)
 
 ## 返回按钮（自适应面板位置）
 func _add_back_button(pr: Rect2) -> void:
 	add_child(_make_button("  ← " + _t("Back") + "  ",
-		Vector2(CENTER_X - 160, pr.position.y + pr.size.y - 120), 36, 320, 84,
+		Vector2(CENTER_X - 80, pr.position.y + pr.size.y - 60), 18, 160, 42,
 		func(): _build_main_menu()))

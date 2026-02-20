@@ -1,5 +1,5 @@
 ## consumable_slot.gd
-## 消耗品栏位 V0.075 - 支持动态栏位上限（Voucher 扩展）- 4K×2 scaled
+## 消耗品栏位 V0.075 - 支持动态栏位上限（Voucher 扩展）
 extends Node2D
 
 signal planet_used(planet: PlanetData)
@@ -8,9 +8,9 @@ signal consumable_hovered(text: String)
 signal consumable_unhovered()
 
 var MAX_CONSUMABLES: int = 2  ## 改为 var 以支持 Voucher 动态扩展
-const SLOT_W: float = 180.0
-const SLOT_H: float = 240.0
-const SLOT_SPACING: float = 220.0
+const SLOT_W: float = 90.0
+const SLOT_H: float = 120.0
+const SLOT_SPACING: float = 110.0
 
 var held_items: Array = []
 var hand_ref = null
@@ -57,10 +57,10 @@ func _rebuild() -> void:
 
 	var title = Label.new()
 	title.text = _t("CONSUMABLES")
-	title.position = Vector2(-SLOT_SPACING, -SLOT_H / 2 - 44)
+	title.position = Vector2(-SLOT_SPACING, -SLOT_H / 2 - 22)
 	title.custom_minimum_size = Vector2(SLOT_SPACING * 2, 0)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", 11)
 	title.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
 	_f(title)
 	add_child(title)
@@ -80,7 +80,7 @@ func _draw_empty_slot(x: float, y: float) -> void:
 	empty.color = Color(0.12, 0.15, 0.18, 0.4)
 	empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(empty)
-	var bw = 2.0
+	var bw = 1.0
 	for edge in [
 		[Vector2(x - SLOT_W/2, y - SLOT_H/2), Vector2(SLOT_W, bw)],
 		[Vector2(x - SLOT_W/2, y + SLOT_H/2 - bw), Vector2(SLOT_W, bw)],
@@ -116,7 +116,7 @@ func _draw_item_card(x: float, y: float, item: Dictionary, index: int) -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 
-	var bw = 4.0
+	var bw = 2.0
 	for edge in [
 		[Vector2(x - SLOT_W/2, y - SLOT_H/2), Vector2(SLOT_W, bw)],
 		[Vector2(x - SLOT_W/2, y + SLOT_H/2 - bw), Vector2(SLOT_W, bw)],
@@ -132,28 +132,28 @@ func _draw_item_card(x: float, y: float, item: Dictionary, index: int) -> void:
 
 	var emoji_lbl = Label.new()
 	emoji_lbl.text = emoji
-	emoji_lbl.position = Vector2(x - SLOT_W / 2, y - SLOT_H / 2 + 10)
+	emoji_lbl.position = Vector2(x - SLOT_W / 2, y - SLOT_H / 2 + 5)
 	emoji_lbl.custom_minimum_size = Vector2(SLOT_W, 0)
 	emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	emoji_lbl.add_theme_font_size_override("font_size", 56)
+	emoji_lbl.add_theme_font_size_override("font_size", 28)
 	add_child(emoji_lbl)
 
 	var name_lbl = Label.new()
 	name_lbl.text = _t(card_name)
-	name_lbl.position = Vector2(x - SLOT_W / 2 + 4, y - SLOT_H / 2 + 100)
-	name_lbl.custom_minimum_size = Vector2(SLOT_W - 8, 0)
+	name_lbl.position = Vector2(x - SLOT_W / 2 + 2, y - SLOT_H / 2 + 50)
+	name_lbl.custom_minimum_size = Vector2(SLOT_W - 4, 0)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 18)
+	name_lbl.add_theme_font_size_override("font_size", 9)
 	name_lbl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.8))
 	_f(name_lbl)
 	add_child(name_lbl)
 
 	var use_lbl = Label.new()
 	use_lbl.text = "[ " + _t("Use") + " ]"
-	use_lbl.position = Vector2(x - SLOT_W / 2, y + SLOT_H / 2 - 44)
+	use_lbl.position = Vector2(x - SLOT_W / 2, y + SLOT_H / 2 - 22)
 	use_lbl.custom_minimum_size = Vector2(SLOT_W, 0)
 	use_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	use_lbl.add_theme_font_size_override("font_size", 22)
+	use_lbl.add_theme_font_size_override("font_size", 11)
 	use_lbl.add_theme_color_override("font_color", Color(0.3, 0.8, 0.9))
 	_f(use_lbl)
 	add_child(use_lbl)

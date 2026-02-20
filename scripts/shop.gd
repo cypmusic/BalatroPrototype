@@ -1,22 +1,22 @@
 ## shop.gd
-## 商店系统 V0.085 - 天书(Tome) 系统 + 折扣支持 (4K)
+## 商店系统 V0.085 - 天书(Tome) 系统 + 折扣支持 (1080p)
 extends Node2D
 
 signal shop_closed()
 
-const SHOP_WIDTH: float = 3840.0
-const SHOP_HEIGHT: float = 2160.0
+const SHOP_WIDTH: float = 1920.0
+const SHOP_HEIGHT: float = 1080.0
 const CENTER_X: float = SHOP_WIDTH / 2.0
 
-const CARD_W: float = 280.0
-const CARD_H: float = 380.0
-const JOKER_AREA_Y: float = 740.0
-const PLANET_AREA_Y: float = 740.0
+const CARD_W: float = 140.0
+const CARD_H: float = 190.0
+const JOKER_AREA_Y: float = 370.0
+const PLANET_AREA_Y: float = 370.0
 
-const OWNED_Y: float = 1640.0
-const OWNED_CARD_W: float = 220.0
-const OWNED_CARD_H: float = 290.0
-const OWNED_SPACING: float = 260.0
+const OWNED_Y: float = 820.0
+const OWNED_CARD_W: float = 110.0
+const OWNED_CARD_H: float = 145.0
+const OWNED_SPACING: float = 130.0
 
 const BASE_REROLL_COST: int = 5
 
@@ -126,7 +126,7 @@ func _process(delta: float) -> void:
 			var p = anim_particles[i]
 			p["life"] -= delta
 			p["pos"] += p["vel"] * delta
-			p["vel"].y += 200.0 * delta
+			p["vel"].y += 100.0 * delta
 			if p["life"] <= 0:
 				to_remove.append(i)
 		to_remove.reverse()
@@ -169,24 +169,24 @@ func _build_ui() -> void:
 	## 霓虹灯 SHOP 招牌
 	var neon_sign = Node2D.new()
 	neon_sign.set_script(load("res://scripts/neon_shop_sign.gd"))
-	neon_sign.position = Vector2(CENTER_X, 60)
+	neon_sign.position = Vector2(CENTER_X, 30)
 	add_child(neon_sign)
 
 	money_label = Label.new()
-	money_label.position = Vector2(0, 180)
+	money_label.position = Vector2(0, 90)
 	money_label.custom_minimum_size = Vector2(SHOP_WIDTH, 0)
 	money_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	money_label.add_theme_font_size_override("font_size", 64)
+	money_label.add_theme_font_size_override("font_size", 32)
 	money_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.2))
 	_f(money_label)
 	add_child(money_label)
 	money_label.text = "$ " + str(money)
 
 	shop_info_label = Label.new()
-	shop_info_label.position = Vector2(0, 270)
+	shop_info_label.position = Vector2(0, 135)
 	shop_info_label.custom_minimum_size = Vector2(SHOP_WIDTH, 0)
 	shop_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	shop_info_label.add_theme_font_size_override("font_size", 32)
+	shop_info_label.add_theme_font_size_override("font_size", 16)
 	shop_info_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.65))
 	_f(shop_info_label)
 	add_child(shop_info_label)
@@ -198,20 +198,20 @@ func _build_ui() -> void:
 	## 区域标签
 	var joker_title = Label.new()
 	joker_title.text = Loc.i().t("BEASTS")
-	joker_title.position = Vector2(CENTER_X / 2.0 - 300, 420)
-	joker_title.custom_minimum_size = Vector2(600, 0)
+	joker_title.position = Vector2(CENTER_X / 2.0 - 150, 210)
+	joker_title.custom_minimum_size = Vector2(300, 0)
 	joker_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	joker_title.add_theme_font_size_override("font_size", 28)
+	joker_title.add_theme_font_size_override("font_size", 14)
 	joker_title.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
 	_f(joker_title)
 	add_child(joker_title)
 
 	var cons_title = Label.new()
 	cons_title.text = Loc.i().t("CONSUMABLES")
-	cons_title.position = Vector2(CENTER_X + CENTER_X / 2.0 - 300, 420)
-	cons_title.custom_minimum_size = Vector2(600, 0)
+	cons_title.position = Vector2(CENTER_X + CENTER_X / 2.0 - 150, 210)
+	cons_title.custom_minimum_size = Vector2(300, 0)
 	cons_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cons_title.add_theme_font_size_override("font_size", 28)
+	cons_title.add_theme_font_size_override("font_size", 14)
 	cons_title.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
 	_f(cons_title)
 	add_child(cons_title)
@@ -223,15 +223,15 @@ func _build_ui() -> void:
 	_build_held_consumables(card_layer)
 
 	## 按钮（对齐 SHOP 霓虹灯边框左右边缘）
-	## 霓虹灯约 360px 宽，居中在 CENTER_X (4K)
-	var btn_y = 1120.0
-	var neon_left_edge = CENTER_X - 180  ## SHOP 霓虹灯左边缘
-	var neon_right_edge = CENTER_X + 180  ## SHOP 霓虹灯右边缘
+	## 霓虹灯约 180px 宽，居中在 CENTER_X (1080p)
+	var btn_y = 560.0
+	var neon_left_edge = CENTER_X - 90  ## SHOP 霓虹灯左边缘
+	var neon_right_edge = CENTER_X + 90  ## SHOP 霓虹灯右边缘
 	var reroll_cost = _get_reroll_cost()
 	var reroll_button = Button.new()
 	reroll_button.text = "   " + Loc.i().t("Reroll") + " ($" + str(reroll_cost) + ")   "
-	reroll_button.position = Vector2(neon_left_edge - 440, btn_y)
-	reroll_button.add_theme_font_size_override("font_size", 40)
+	reroll_button.position = Vector2(neon_left_edge - 220, btn_y)
+	reroll_button.add_theme_font_size_override("font_size", 20)
 	reroll_button.pressed.connect(_on_reroll)
 	reroll_button.disabled = money < reroll_cost
 	_fb(reroll_button)
@@ -239,8 +239,8 @@ func _build_ui() -> void:
 
 	var skip_button = Button.new()
 	skip_button.text = "   " + Loc.i().t("Next Round") + " →   "
-	skip_button.position = Vector2(neon_right_edge + 20, btn_y)
-	skip_button.add_theme_font_size_override("font_size", 40)
+	skip_button.position = Vector2(neon_right_edge + 10, btn_y)
+	skip_button.add_theme_font_size_override("font_size", 20)
 	skip_button.pressed.connect(_on_skip)
 	_fb(skip_button)
 	add_child(skip_button)
@@ -258,7 +258,7 @@ func _build_ui() -> void:
 func _build_shop_jokers(parent: Node2D) -> void:
 	var count = shop_jokers.size()
 	if count == 0: return
-	var spacing = 340.0
+	var spacing = 170.0
 	var total_w = (count - 1) * spacing
 	var base_x = CENTER_X / 2.0 - total_w / 2.0
 	for i in range(count):
@@ -274,7 +274,7 @@ func _build_shop_jokers(parent: Node2D) -> void:
 func _build_shop_consumables(parent: Node2D) -> void:
 	var count = shop_consumables.size()
 	if count == 0: return
-	var spacing = 340.0
+	var spacing = 170.0
 	var total_w = (count - 1) * spacing
 	var base_x = CENTER_X + CENTER_X / 2.0 - total_w / 2.0
 	for i in range(count):
@@ -304,10 +304,10 @@ func _build_shop_voucher(parent: Node2D) -> void:
 	var voucher_y = JOKER_AREA_Y  ## 与小丑牌/消耗品同一水平线
 	var voucher_title = Label.new()
 	voucher_title.text = "🎟️ " + Loc.i().t("TOME")
-	voucher_title.position = Vector2(voucher_x - 150, 420)
-	voucher_title.custom_minimum_size = Vector2(300, 0)
+	voucher_title.position = Vector2(voucher_x - 75, 210)
+	voucher_title.custom_minimum_size = Vector2(150, 0)
 	voucher_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	voucher_title.add_theme_font_size_override("font_size", 28)
+	voucher_title.add_theme_font_size_override("font_size", 14)
 	voucher_title.add_theme_color_override("font_color", Color(0.95, 0.75, 0.2))
 	_f(voucher_title)
 	parent.add_child(voucher_title)
@@ -323,10 +323,10 @@ func _build_owned_jokers(parent: Node2D) -> void:
 	var owned = joker_slot_ref.get_owned_jokers()
 	var section_title = Label.new()
 	section_title.text = Loc.i().t("YOUR BEASTS") + (" (" + Loc.i().t("Right click to sell") + ")" if owned.size() > 0 else "")
-	section_title.position = Vector2(0, OWNED_Y - 200)
+	section_title.position = Vector2(0, OWNED_Y - 100)
 	section_title.custom_minimum_size = Vector2(CENTER_X, 0)
 	section_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	section_title.add_theme_font_size_override("font_size", 26)
+	section_title.add_theme_font_size_override("font_size", 13)
 	section_title.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
 	_f(section_title)
 	parent.add_child(section_title)
@@ -341,10 +341,10 @@ func _build_owned_jokers(parent: Node2D) -> void:
 			joker.get_rarity_color(), -1, OWNED_CARD_W, OWNED_CARD_H)
 		var sell_lbl = Label.new()
 		sell_lbl.text = Loc.i().t("Right: Sell") + " $" + str(joker.get_sell_price())
-		sell_lbl.position = Vector2(x - OWNED_CARD_W / 2, OWNED_Y + OWNED_CARD_H / 2 + 10)
+		sell_lbl.position = Vector2(x - OWNED_CARD_W / 2, OWNED_Y + OWNED_CARD_H / 2 + 5)
 		sell_lbl.custom_minimum_size = Vector2(OWNED_CARD_W, 0)
 		sell_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		sell_lbl.add_theme_font_size_override("font_size", 24)
+		sell_lbl.add_theme_font_size_override("font_size", 12)
 		sell_lbl.add_theme_color_override("font_color", Color(0.9, 0.6, 0.2))
 		_f(sell_lbl)
 		parent.add_child(sell_lbl)
@@ -360,10 +360,10 @@ func _build_held_consumables(parent: Node2D) -> void:
 	if held.size() > 0:
 		hint_text = "  (" + Loc.i().t("Left: Use") + " | " + Loc.i().t("Right: Sell") + ")"
 	section_title.text = Loc.i().t("YOUR CONSUMABLES") + " (" + str(held.size()) + "/" + str(consumable_slot_ref.MAX_CONSUMABLES) + ")" + hint_text
-	section_title.position = Vector2(CENTER_X, OWNED_Y - 200)
+	section_title.position = Vector2(CENTER_X, OWNED_Y - 100)
 	section_title.custom_minimum_size = Vector2(CENTER_X, 0)
 	section_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	section_title.add_theme_font_size_override("font_size", 26)
+	section_title.add_theme_font_size_override("font_size", 13)
 	section_title.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
 	_f(section_title)
 	parent.add_child(section_title)
@@ -390,10 +390,10 @@ func _build_held_consumables(parent: Node2D) -> void:
 		## 使用/出售标签
 		var action_lbl = Label.new()
 		action_lbl.text = Loc.i().t("Use") + " | " + Loc.i().t("Sell") + " $" + str(sell_price)
-		action_lbl.position = Vector2(x - OWNED_CARD_W / 2, OWNED_Y + OWNED_CARD_H / 2 + 10)
+		action_lbl.position = Vector2(x - OWNED_CARD_W / 2, OWNED_Y + OWNED_CARD_H / 2 + 5)
 		action_lbl.custom_minimum_size = Vector2(OWNED_CARD_W, 0)
 		action_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		action_lbl.add_theme_font_size_override("font_size", 20)
+		action_lbl.add_theme_font_size_override("font_size", 10)
 		action_lbl.add_theme_color_override("font_color", Color(0.3, 0.8, 0.9))
 		_f(action_lbl)
 		parent.add_child(action_lbl)
@@ -434,7 +434,7 @@ func _build_card(parent: Node2D, x: float, y: float, emoji: String, card_name: S
 	clip.add_child(card_bg)
 
 	## Emoji（上部居中）
-	var emoji_size = 76 if w >= 280 else 56
+	var emoji_size = 38 if w >= 140 else 28
 	var emoji_lbl = Label.new()
 	emoji_lbl.text = emoji
 	emoji_lbl.position = Vector2(0, 0)
@@ -445,13 +445,13 @@ func _build_card(parent: Node2D, x: float, y: float, emoji: String, card_name: S
 	clip.add_child(emoji_lbl)
 
 	## 名字
-	var name_size = 22 if w >= 280 else 18
+	var name_size = 11 if w >= 140 else 9
 	var name_y = h * 0.50
 	var name_rtl = RichTextLabel.new()
 	name_rtl.bbcode_enabled = true
 	name_rtl.text = "[center]" + Loc.i().t(card_name) + "[/center]"
-	name_rtl.position = Vector2(8, name_y)
-	name_rtl.size = Vector2(w - 16, 44)
+	name_rtl.position = Vector2(4, name_y)
+	name_rtl.size = Vector2(w - 8, 22)
 	name_rtl.add_theme_font_size_override("normal_font_size", name_size)
 	name_rtl.add_theme_color_override("default_color", Color(0.9, 0.9, 0.85))
 	name_rtl.scroll_active = false
@@ -460,13 +460,13 @@ func _build_card(parent: Node2D, x: float, y: float, emoji: String, card_name: S
 	clip.add_child(name_rtl)
 
 	## 描述（RichTextLabel 保证换行）
-	var desc_size = 18 if w >= 280 else 14
-	var desc_y = name_y + 40
+	var desc_size = 9 if w >= 140 else 7
+	var desc_y = name_y + 20
 	var desc_rtl = RichTextLabel.new()
 	desc_rtl.bbcode_enabled = true
 	desc_rtl.text = "[center]" + Loc.i().t(desc) + "[/center]"
-	desc_rtl.position = Vector2(8, desc_y)
-	desc_rtl.size = Vector2(w - 16, h - desc_y - 4)
+	desc_rtl.position = Vector2(4, desc_y)
+	desc_rtl.size = Vector2(w - 8, h - desc_y - 2)
 	desc_rtl.add_theme_font_size_override("normal_font_size", desc_size)
 	desc_rtl.add_theme_color_override("default_color", Color(0.65, 0.65, 0.6))
 	desc_rtl.scroll_active = false
@@ -475,7 +475,7 @@ func _build_card(parent: Node2D, x: float, y: float, emoji: String, card_name: S
 	clip.add_child(desc_rtl)
 
 	## 边框
-	var bw = 6.0 if w >= 280 else 4.0
+	var bw = 3.0 if w >= 140 else 2.0
 	for edge in [
 		[Vector2(x - w/2, y - h/2), Vector2(w, bw)],
 		[Vector2(x - w/2, y + h/2 - bw), Vector2(w, bw)],
@@ -494,10 +494,10 @@ func _build_card(parent: Node2D, x: float, y: float, emoji: String, card_name: S
 		var price_color = Color(0.95, 0.8, 0.2) if money >= cost else Color(0.6, 0.3, 0.3)
 		var price_lbl = Label.new()
 		price_lbl.text = "$" + str(cost)
-		price_lbl.position = Vector2(x - w / 2, y + h / 2 + 10)
+		price_lbl.position = Vector2(x - w / 2, y + h / 2 + 5)
 		price_lbl.custom_minimum_size = Vector2(w, 0)
 		price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		price_lbl.add_theme_font_size_override("font_size", 40)
+		price_lbl.add_theme_font_size_override("font_size", 20)
 		price_lbl.add_theme_color_override("font_color", price_color)
 		_f(price_lbl)
 		parent.add_child(price_lbl)
@@ -541,25 +541,25 @@ func _add_sell_area(x: float, y: float, w: float, h: float, item_type: String, i
 func _spawn_shatter_particles(cx: float, cy: float, color: Color, count: int = 20) -> void:
 	for i in range(count):
 		var angle = randf() * TAU
-		var speed = randf_range(80.0, 300.0)
+		var speed = randf_range(40.0, 150.0)
 		anim_particles.append({
-			"pos": Vector2(cx + randf_range(-20, 20), cy + randf_range(-20, 20)),
-			"vel": Vector2(cos(angle) * speed, sin(angle) * speed - 100.0),
+			"pos": Vector2(cx + randf_range(-10, 10), cy + randf_range(-10, 10)),
+			"vel": Vector2(cos(angle) * speed, sin(angle) * speed - 50.0),
 			"color": Color(color.r + randf_range(-0.1, 0.1), color.g + randf_range(-0.1, 0.1), color.b + randf_range(-0.1, 0.1)),
 			"life": randf_range(0.4, 0.9), "max_life": 0.9,
-			"size": randf_range(3.0, 8.0),
+			"size": randf_range(1.5, 4.0),
 		})
 
 func _spawn_glow_particles(cx: float, cy: float, color: Color, count: int = 15) -> void:
 	for i in range(count):
 		var angle = randf() * TAU
-		var speed = randf_range(30.0, 120.0)
+		var speed = randf_range(15.0, 60.0)
 		anim_particles.append({
-			"pos": Vector2(cx + randf_range(-10, 10), cy + randf_range(-10, 10)),
-			"vel": Vector2(cos(angle) * speed, sin(angle) * speed - 50.0),
+			"pos": Vector2(cx + randf_range(-5, 5), cy + randf_range(-5, 5)),
+			"vel": Vector2(cos(angle) * speed, sin(angle) * speed - 25.0),
 			"color": Color(color.r, color.g, color.b, 0.9),
 			"life": randf_range(0.3, 0.7), "max_life": 0.7,
-			"size": randf_range(4.0, 10.0),
+			"size": randf_range(2.0, 5.0),
 		})
 
 ## ========== 交互回调 ==========
@@ -633,7 +633,7 @@ func _buy_joker(index: int) -> void:
 		return
 
 	var count = shop_jokers.size()
-	var spacing = 340.0
+	var spacing = 170.0
 	var total_w = (count - 1) * spacing
 	var base_x = CENTER_X / 2.0 - total_w / 2.0
 	var cx = base_x + index * spacing
@@ -677,7 +677,7 @@ func _buy_consumable(index: int) -> void:
 		return
 
 	var count = shop_consumables.size()
-	var spacing = 340.0
+	var spacing = 170.0
 	var total_w = (count - 1) * spacing
 	var base_x = CENTER_X + CENTER_X / 2.0 - total_w / 2.0
 	var cx = base_x + index * spacing
@@ -739,7 +739,7 @@ func _sell_joker(index: int) -> void:
 	var start_x = CENTER_X / 2.0 - total_w / 2.0
 	var cx = start_x + index * OWNED_SPACING
 	_spawn_shatter_particles(cx, OWNED_Y, Color(0.9, 0.5, 0.15), 25)
-	_spawn_glow_particles(cx, OWNED_Y - 30, Color(0.95, 0.8, 0.2), 10)
+	_spawn_glow_particles(cx, OWNED_Y - 15, Color(0.95, 0.8, 0.2), 10)
 
 	var old_money = money
 	money += sell_price

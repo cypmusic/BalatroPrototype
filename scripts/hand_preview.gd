@@ -9,8 +9,8 @@ var preview_mult: Label
 var preview_score: Label
 var bg_panel: ColorRect
 
-const PANEL_WIDTH: float = 600.0
-const PANEL_HEIGHT: float = 320.0
+const PANEL_WIDTH: float = 300.0
+const PANEL_HEIGHT: float = 160.0
 
 func _f(lbl: Label) -> void:
 	var font = Loc.i().cn_font
@@ -29,30 +29,30 @@ func _setup_panel() -> void:
 
 	## 牌型名称
 	type_label = Label.new()
-	type_label.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 16)
+	type_label.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 8)
 	type_label.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	type_label.add_theme_font_size_override("font_size", 52)
+	type_label.add_theme_font_size_override("font_size", 26)
 	type_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.4))
 	_f(type_label)
 	add_child(type_label)
 
 	## 等级信息
 	level_info_label = Label.new()
-	level_info_label.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 84)
+	level_info_label.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 42)
 	level_info_label.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	level_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	level_info_label.add_theme_font_size_override("font_size", 28)
+	level_info_label.add_theme_font_size_override("font_size", 14)
 	level_info_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.55))
 	_f(level_info_label)
 	add_child(level_info_label)
 
 	## Chips + Mult（合为一行居中显示）
 	preview_chips = Label.new()
-	preview_chips.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 136)
+	preview_chips.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 68)
 	preview_chips.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	preview_chips.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	preview_chips.add_theme_font_size_override("font_size", 36)
+	preview_chips.add_theme_font_size_override("font_size", 18)
 	preview_chips.add_theme_color_override("font_color", Color(0.4, 0.65, 0.95))
 	_f(preview_chips)
 	add_child(preview_chips)
@@ -64,10 +64,10 @@ func _setup_panel() -> void:
 
 	## 预计总分
 	preview_score = Label.new()
-	preview_score.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 210)
+	preview_score.position = Vector2(-PANEL_WIDTH / 2, -PANEL_HEIGHT / 2 + 105)
 	preview_score.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	preview_score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	preview_score.add_theme_font_size_override("font_size", 60)
+	preview_score.add_theme_font_size_override("font_size", 30)
 	preview_score.add_theme_color_override("font_color", Color(0.95, 0.95, 0.9))
 	_f(preview_score)
 	add_child(preview_score)

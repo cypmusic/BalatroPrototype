@@ -5,7 +5,7 @@ extends Node2D
 signal celebration_done()
 
 const SCREEN_W: float = 1920.0
-const SCREEN_H: float = 1280.0
+const SCREEN_H: float = 1080.0
 const CENTER_X: float = SCREEN_W / 2.0
 const CENTER_Y: float = SCREEN_H / 2.0
 

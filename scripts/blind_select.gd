@@ -1,18 +1,18 @@
 ## blind_select.gd
-## 盲注选择界面 V10 - 跳过奖励系统 (4K)
+## 盲注选择界面 V10 - 跳过奖励系统
 extends Node2D
 
 signal blind_selected(blind_type: int, boss_blind)
 signal blind_skipped(skip_reward: String)  ## 跳过并带奖励类型
 
-const SCREEN_W: float = 3840.0
-const SCREEN_H: float = 2160.0
+const SCREEN_W: float = 1920.0
+const SCREEN_H: float = 1080.0
 const CENTER_X: float = SCREEN_W / 2.0
 
-const CARD_W: float = 520.0
-const CARD_H: float = 700.0
-const CARD_SPACING: float = 640.0
-const CARDS_Y: float = 1000.0
+const CARD_W: float = 260.0
+const CARD_H: float = 350.0
+const CARD_SPACING: float = 320.0
+const CARDS_Y: float = 500.0
 
 var ante: int = 1
 var current_blind_index: int = 0
@@ -73,10 +73,10 @@ func _build_ui() -> void:
 
 	var title = Label.new()
 	title.text = _t("ANTE") + " " + str(ante)
-	title.position = Vector2(0, 80)
+	title.position = Vector2(0, 40)
 	title.custom_minimum_size = Vector2(SCREEN_W, 0)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 104)
+	title.add_theme_font_size_override("font_size", 52)
 	title.add_theme_color_override("font_color", Color(0.95, 0.85, 0.4))
 	_apply_font(title)
 	add_child(title)
@@ -91,10 +91,10 @@ func _build_ui() -> void:
 			progress_text += "○ "
 	var progress = Label.new()
 	progress.text = progress_text
-	progress.position = Vector2(0, 200)
+	progress.position = Vector2(0, 100)
 	progress.custom_minimum_size = Vector2(SCREEN_W, 0)
 	progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	progress.add_theme_font_size_override("font_size", 56)
+	progress.add_theme_font_size_override("font_size", 28)
 	progress.add_theme_color_override("font_color", Color(0.7, 0.7, 0.65))
 	add_child(progress)
 
@@ -113,13 +113,13 @@ func _build_ui() -> void:
 		_build_blind_card(x, info, is_current, is_completed)
 
 	var current_info = blinds_info[current_blind_index]
-	var btn_y = 1520.0
+	var btn_y = 760.0
 
 	var play_btn = Button.new()
 	play_btn.text = "   " + _t("Play") + " " + _t(current_info["name"]) + "   "
-	play_btn.position = Vector2(CENTER_X - 300, btn_y)
-	play_btn.custom_minimum_size = Vector2(600, 0)
-	_apply_font_btn(play_btn, 48)
+	play_btn.position = Vector2(CENTER_X - 150, btn_y)
+	play_btn.custom_minimum_size = Vector2(300, 0)
+	_apply_font_btn(play_btn, 24)
 	play_btn.pressed.connect(_on_play_current)
 	add_child(play_btn)
 
@@ -129,28 +129,28 @@ func _build_ui() -> void:
 
 		var skip_btn = Button.new()
 		skip_btn.text = "   " + _t("Skip") + " →   "
-		skip_btn.position = Vector2(CENTER_X - 160, btn_y + 100)
-		skip_btn.custom_minimum_size = Vector2(320, 0)
-		_apply_font_btn(skip_btn, 36)
+		skip_btn.position = Vector2(CENTER_X - 80, btn_y + 50)
+		skip_btn.custom_minimum_size = Vector2(160, 0)
+		_apply_font_btn(skip_btn, 18)
 		skip_btn.pressed.connect(_on_skip_current)
 		add_child(skip_btn)
 
 		## 跳过奖励标签
 		var reward_label = Label.new()
 		reward_label.text = reward["emoji"] + " " + _t("Skip reward") + ": " + _t(reward["name"])
-		reward_label.position = Vector2(0, btn_y + 180)
+		reward_label.position = Vector2(0, btn_y + 90)
 		reward_label.custom_minimum_size = Vector2(SCREEN_W, 0)
 		reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_apply_font(reward_label, 32)
+		_apply_font(reward_label, 16)
 		reward_label.add_theme_color_override("font_color", Color(0.5, 0.8, 0.95))
 		add_child(reward_label)
 
 		var reward_desc = Label.new()
 		reward_desc.text = _t(reward["desc"])
-		reward_desc.position = Vector2(0, btn_y + 224)
+		reward_desc.position = Vector2(0, btn_y + 112)
 		reward_desc.custom_minimum_size = Vector2(SCREEN_W, 0)
 		reward_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_apply_font(reward_desc, 26)
+		_apply_font(reward_desc, 13)
 		reward_desc.add_theme_color_override("font_color", Color(0.45, 0.65, 0.75))
 		add_child(reward_desc)
 
@@ -188,7 +188,7 @@ func _build_blind_card(x: float, info: Dictionary, is_current: bool, is_complete
 	elif not is_current:
 		border_color = Color(border_color.r, border_color.g, border_color.b, 0.5)
 
-	var bw = 6.0
+	var bw = 3.0
 	for edge in [
 		[Vector2(x - CARD_W/2, CARDS_Y - CARD_H/2), Vector2(CARD_W, bw)],
 		[Vector2(x - CARD_W/2, CARDS_Y + CARD_H/2 - bw), Vector2(CARD_W, bw)],
@@ -207,67 +207,67 @@ func _build_blind_card(x: float, info: Dictionary, is_current: bool, is_complete
 	if is_completed:
 		var check = Label.new()
 		check.text = "✓"
-		check.position = Vector2(x - CARD_W / 2, CARDS_Y - 80)
+		check.position = Vector2(x - CARD_W / 2, CARDS_Y - 40)
 		check.custom_minimum_size = Vector2(CARD_W, 0)
 		check.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		check.add_theme_font_size_override("font_size", 120)
+		check.add_theme_font_size_override("font_size", 60)
 		check.add_theme_color_override("font_color", Color(0.3, 0.8, 0.3, 0.7))
 		card_canvas.add_child(check)
 		return
 
 	var emoji_lbl = Label.new()
 	emoji_lbl.text = info["emoji"]
-	emoji_lbl.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 40)
+	emoji_lbl.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 20)
 	emoji_lbl.custom_minimum_size = Vector2(CARD_W, 0)
 	emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	emoji_lbl.add_theme_font_size_override("font_size", 100)
+	emoji_lbl.add_theme_font_size_override("font_size", 50)
 	card_canvas.add_child(emoji_lbl)
 
 	var name_lbl = Label.new()
 	name_lbl.text = _t(info["name"])
-	name_lbl.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 200)
+	name_lbl.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 100)
 	name_lbl.custom_minimum_size = Vector2(CARD_W, 0)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.95, 0.9, txt_alpha))
-	_apply_font(name_lbl, 44)
+	_apply_font(name_lbl, 22)
 	card_canvas.add_child(name_lbl)
 
 	var desc_lbl = Label.new()
 	desc_lbl.text = _t(info["desc"])
-	desc_lbl.position = Vector2(x - CARD_W / 2 + 20, CARDS_Y - CARD_H / 2 + 260)
-	desc_lbl.custom_minimum_size = Vector2(CARD_W - 40, 0)
+	desc_lbl.position = Vector2(x - CARD_W / 2 + 10, CARDS_Y - CARD_H / 2 + 130)
+	desc_lbl.custom_minimum_size = Vector2(CARD_W - 20, 0)
 	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc_lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.6, txt_alpha))
-	_apply_font(desc_lbl, 28)
+	_apply_font(desc_lbl, 14)
 	card_canvas.add_child(desc_lbl)
 
 	var target_title = Label.new()
 	target_title.text = _t("Target")
-	target_title.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 360)
+	target_title.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 180)
 	target_title.custom_minimum_size = Vector2(CARD_W, 0)
 	target_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	target_title.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45, txt_alpha))
-	_apply_font(target_title, 28)
+	_apply_font(target_title, 14)
 	card_canvas.add_child(target_title)
 
 	var target_lbl = Label.new()
 	target_lbl.text = str(target)
-	target_lbl.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 400)
+	target_lbl.position = Vector2(x - CARD_W / 2, CARDS_Y - CARD_H / 2 + 200)
 	target_lbl.custom_minimum_size = Vector2(CARD_W, 0)
 	target_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	target_lbl.add_theme_font_size_override("font_size", 72)
+	target_lbl.add_theme_font_size_override("font_size", 36)
 	var tc = Color(0.9, 0.3, 0.3, txt_alpha) if is_current else Color(0.7, 0.4, 0.4, txt_alpha)
 	target_lbl.add_theme_color_override("font_color", tc)
 	card_canvas.add_child(target_lbl)
 
 	var reward_lbl = Label.new()
 	reward_lbl.text = _t("Reward") + ": $" + str(reward)
-	reward_lbl.position = Vector2(x - CARD_W / 2 + 20, CARDS_Y - CARD_H / 2 + 540)
-	reward_lbl.custom_minimum_size = Vector2(CARD_W - 40, 0)
+	reward_lbl.position = Vector2(x - CARD_W / 2 + 10, CARDS_Y - CARD_H / 2 + 270)
+	reward_lbl.custom_minimum_size = Vector2(CARD_W - 20, 0)
 	reward_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	reward_lbl.add_theme_font_size_override("font_size", 32)
+	reward_lbl.add_theme_font_size_override("font_size", 16)
 	reward_lbl.add_theme_color_override("font_color", Color(0.95, 0.8, 0.2, txt_alpha))
-	_apply_font(reward_lbl, 32)
+	_apply_font(reward_lbl, 16)
 	card_canvas.add_child(reward_lbl)
 
 	## 在非Boss盲注卡片底部显示跳过奖励预览
@@ -277,11 +277,11 @@ func _build_blind_card(x: float, info: Dictionary, is_current: bool, is_complete
 			var sr = skip_rewards[skip_idx]
 			var skip_lbl = Label.new()
 			skip_lbl.text = _t("Skip") + ": " + sr["emoji"] + " " + _t(sr["name"])
-			skip_lbl.position = Vector2(x - CARD_W / 2 + 20, CARDS_Y - CARD_H / 2 + 610)
-			skip_lbl.custom_minimum_size = Vector2(CARD_W - 40, 0)
+			skip_lbl.position = Vector2(x - CARD_W / 2 + 10, CARDS_Y - CARD_H / 2 + 305)
+			skip_lbl.custom_minimum_size = Vector2(CARD_W - 20, 0)
 			skip_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			skip_lbl.add_theme_color_override("font_color", Color(0.5, 0.8, 0.95, txt_alpha * 0.8))
-			_apply_font(skip_lbl, 26)
+			_apply_font(skip_lbl, 13)
 			card_canvas.add_child(skip_lbl)
 
 func _on_play_current() -> void:
@@ -330,15 +330,15 @@ func _play_skip_reward_animation(reward_info: Dictionary, reward_id: String) -> 
 	anim_confetti.clear()
 	for i in range(80):
 		var confetti = {
-			"pos": Vector2(randf_range(200, SCREEN_W - 200), randf_range(-400, -100)),
-			"vel": Vector2(randf_range(-160, 160), randf_range(300, 800)),
+			"pos": Vector2(randf_range(100, SCREEN_W - 100), randf_range(-200, -50)),
+			"vel": Vector2(randf_range(-80, 80), randf_range(150, 400)),
 			"rot": randf() * TAU,
 			"rot_speed": randf_range(-5, 5),
 			"color": [
 				Color(1.0, 0.3, 0.3), Color(0.3, 0.8, 1.0), Color(1.0, 0.85, 0.2),
 				Color(0.4, 1.0, 0.4), Color(1.0, 0.5, 0.8), Color(0.6, 0.4, 1.0)
 			][randi() % 6],
-			"size": Vector2(randf_range(8, 24), randf_range(16, 40)),
+			"size": Vector2(randf_range(4, 12), randf_range(8, 20)),
 			"delay": randf_range(0, 0.5),
 		}
 		anim_confetti.append(confetti)
@@ -351,7 +351,7 @@ func _process(delta: float) -> void:
 	for c in anim_confetti:
 		if anim_timer > c["delay"]:
 			c["pos"] += c["vel"] * delta
-			c["vel"].x += randf_range(-40, 40) * delta
+			c["vel"].x += randf_range(-20, 20) * delta
 			c["rot"] += c["rot_speed"] * delta
 	queue_redraw()
 	## 动画结束
@@ -383,7 +383,7 @@ func _draw() -> void:
 
 	if card_w > 2 and card_h > 2:
 		var cx = CENTER_X
-		var cy = 900.0
+		var cy = 450.0
 		var card_rect = Rect2(cx - card_w / 2, cy - card_h / 2, card_w, card_h)
 
 		## 卡牌背景
@@ -391,7 +391,7 @@ func _draw() -> void:
 
 		## 边框
 		var border_color = Color(0.5, 0.8, 0.95)
-		var bw = 6.0
+		var bw = 3.0
 		draw_rect(Rect2(card_rect.position, Vector2(card_rect.size.x, bw)), border_color)
 		draw_rect(Rect2(card_rect.position + Vector2(0, card_rect.size.y - bw), Vector2(card_rect.size.x, bw)), border_color)
 		draw_rect(Rect2(card_rect.position, Vector2(bw, card_rect.size.y)), border_color)
@@ -406,13 +406,13 @@ func _draw() -> void:
 			var reward_desc = _t(anim_reward_info.get("desc", ""))
 
 			## Emoji
-			_draw_centered_text(emoji, cx, cy - card_h * 0.2, 100, Color(1, 1, 1, text_alpha), font)
+			_draw_centered_text(emoji, cx, cy - card_h * 0.2, 50, Color(1, 1, 1, text_alpha), font)
 			## 名称
-			_draw_centered_text(reward_name, cx, cy + card_h * 0.05, 52, Color(0.95, 0.85, 0.4, text_alpha), font)
+			_draw_centered_text(reward_name, cx, cy + card_h * 0.05, 26, Color(0.95, 0.85, 0.4, text_alpha), font)
 			## 描述
-			_draw_centered_text(reward_desc, cx, cy + card_h * 0.2, 32, Color(0.7, 0.7, 0.65, text_alpha), font)
+			_draw_centered_text(reward_desc, cx, cy + card_h * 0.2, 16, Color(0.7, 0.7, 0.65, text_alpha), font)
 			## 跳过奖励标签
-			_draw_centered_text(_t("Skip reward") + "!", cx, cy - card_h * 0.38, 36, Color(0.5, 0.8, 0.95, text_alpha), font)
+			_draw_centered_text(_t("Skip reward") + "!", cx, cy - card_h * 0.38, 18, Color(0.5, 0.8, 0.95, text_alpha), font)
 
 	## 绘制彩带
 	for c in anim_confetti:

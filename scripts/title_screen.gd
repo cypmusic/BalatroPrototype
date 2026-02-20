@@ -5,8 +5,8 @@ extends Node2D
 signal start_game()
 signal open_title_menu()  ## 点击 Start Game 后打开标题菜单
 
-const SCREEN_W: float = 3840.0
-const SCREEN_H: float = 2160.0
+const SCREEN_W: float = 1920.0
+const SCREEN_H: float = 1080.0
 const CENTER_X: float = SCREEN_W / 2.0
 const CENTER_Y: float = SCREEN_H / 2.0
 
@@ -26,10 +26,10 @@ const SUIT_COLORS_MAP = {
 ## 扇形牌
 var fan_card_nodes: Array = []
 const FAN_CARD_COUNT: int = 5
-const FAN_CARD_W: float = 200.0
-const FAN_CARD_H: float = 280.0
-const FAN_SPREAD: float = 12.0
-const FAN_CENTER_Y: float = CENTER_Y + 40.0
+const FAN_CARD_W: float = 100.0
+const FAN_CARD_H: float = 140.0
+const FAN_SPREAD: float = 6.0
+const FAN_CENTER_Y: float = CENTER_Y + 20.0
 
 ## UI
 var title_label: Label = null
@@ -92,10 +92,10 @@ func _build_ui() -> void:
 
 	title_label = Label.new()
 	title_label.text = "BALATRO"
-	title_label.position = Vector2(0, 240)
+	title_label.position = Vector2(0, 120)
 	title_label.custom_minimum_size = Vector2(SCREEN_W, 0)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 192)
+	title_label.add_theme_font_size_override("font_size", 96)
 	title_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.3))
 	title_label.z_index = 5
 	title_label.modulate.a = 0.0
@@ -103,10 +103,10 @@ func _build_ui() -> void:
 
 	sub_label = Label.new()
 	sub_label.text = "P R O T O T Y P E"
-	sub_label.position = Vector2(0, 470)
+	sub_label.position = Vector2(0, 235)
 	sub_label.custom_minimum_size = Vector2(SCREEN_W, 0)
 	sub_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub_label.add_theme_font_size_override("font_size", 40)
+	sub_label.add_theme_font_size_override("font_size", 20)
 	sub_label.add_theme_color_override("font_color", Color(0.6, 0.65, 0.55))
 	sub_label.z_index = 5
 	sub_label.modulate.a = 0.0
@@ -114,9 +114,9 @@ func _build_ui() -> void:
 
 	start_button = Button.new()
 	start_button.text = "    ♠  Start Game  ♠    "
-	start_button.custom_minimum_size = Vector2(640, 120)
-	start_button.position = Vector2(CENTER_X - 320, CENTER_Y + 560)
-	start_button.add_theme_font_size_override("font_size", 56)
+	start_button.custom_minimum_size = Vector2(320, 60)
+	start_button.position = Vector2(CENTER_X - 160, CENTER_Y + 280)
+	start_button.add_theme_font_size_override("font_size", 28)
 	start_button.z_index = 10
 	start_button.modulate.a = 0.0
 	start_button.pressed.connect(_on_start_pressed)
@@ -124,10 +124,10 @@ func _build_ui() -> void:
 
 	version_label = Label.new()
 	version_label.text = GameConfig.VERSION_LABEL
-	version_label.position = Vector2(0, SCREEN_H - 100)
+	version_label.position = Vector2(0, SCREEN_H - 50)
 	version_label.custom_minimum_size = Vector2(SCREEN_W, 0)
 	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	version_label.add_theme_font_size_override("font_size", 28)
+	version_label.add_theme_font_size_override("font_size", 14)
 	version_label.add_theme_color_override("font_color", Color(0.35, 0.35, 0.3))
 	version_label.z_index = 5
 	version_label.modulate.a = 0.0
@@ -165,8 +165,8 @@ func _build_fan_cards() -> void:
 
 		## 内边框
 		var inner = ColorRect.new()
-		inner.position = Vector2(-FAN_CARD_W / 2 + 4, -FAN_CARD_H + 4)
-		inner.size = Vector2(FAN_CARD_W - 8, FAN_CARD_H - 8)
+		inner.position = Vector2(-FAN_CARD_W / 2 + 2, -FAN_CARD_H + 2)
+		inner.size = Vector2(FAN_CARD_W - 4, FAN_CARD_H - 4)
 		inner.color = Color(0.97, 0.96, 0.93)
 		inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		pivot.add_child(inner)
@@ -174,34 +174,34 @@ func _build_fan_cards() -> void:
 		## 中央大花色
 		var center_suit = Label.new()
 		center_suit.text = suits[i]
-		center_suit.position = Vector2(-FAN_CARD_W / 2, -FAN_CARD_H + 76)
+		center_suit.position = Vector2(-FAN_CARD_W / 2, -FAN_CARD_H + 38)
 		center_suit.custom_minimum_size = Vector2(FAN_CARD_W, 0)
 		center_suit.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		center_suit.add_theme_font_size_override("font_size", 88)
+		center_suit.add_theme_font_size_override("font_size", 44)
 		center_suit.add_theme_color_override("font_color", suit_colors[i])
 		pivot.add_child(center_suit)
 
 		## 左上 Rank
 		var rank_lbl = Label.new()
 		rank_lbl.text = ranks[i]
-		rank_lbl.position = Vector2(-FAN_CARD_W / 2 + 16, -FAN_CARD_H + 10)
-		rank_lbl.add_theme_font_size_override("font_size", 32)
+		rank_lbl.position = Vector2(-FAN_CARD_W / 2 + 8, -FAN_CARD_H + 5)
+		rank_lbl.add_theme_font_size_override("font_size", 16)
 		rank_lbl.add_theme_color_override("font_color", suit_colors[i])
 		pivot.add_child(rank_lbl)
 
 		## 左上小花色
 		var small_suit = Label.new()
 		small_suit.text = suits[i]
-		small_suit.position = Vector2(-FAN_CARD_W / 2 + 16, -FAN_CARD_H + 44)
-		small_suit.add_theme_font_size_override("font_size", 24)
+		small_suit.position = Vector2(-FAN_CARD_W / 2 + 8, -FAN_CARD_H + 22)
+		small_suit.add_theme_font_size_override("font_size", 12)
 		small_suit.add_theme_color_override("font_color", suit_colors[i])
 		pivot.add_child(small_suit)
 
 		## 右下 Rank（倒转）
 		var rank_lbl2 = Label.new()
 		rank_lbl2.text = ranks[i]
-		rank_lbl2.position = Vector2(FAN_CARD_W / 2 - 48, -40)
-		rank_lbl2.add_theme_font_size_override("font_size", 32)
+		rank_lbl2.position = Vector2(FAN_CARD_W / 2 - 24, -20)
+		rank_lbl2.add_theme_font_size_override("font_size", 16)
 		rank_lbl2.add_theme_color_override("font_color", suit_colors[i])
 		pivot.add_child(rank_lbl2)
 
@@ -213,7 +213,7 @@ func _build_fan_cards() -> void:
 			"node": pivot,
 			"target_angle": deg_to_rad(target_angle),
 			"delay": 1.2 + i * 0.12,
-			"start_y": FAN_CENTER_Y + FAN_CARD_H * 0.4 + 500.0,
+			"start_y": FAN_CENTER_Y + FAN_CARD_H * 0.4 + 250.0,
 			"end_y": FAN_CENTER_Y + FAN_CARD_H * 0.4,
 		})
 
@@ -224,19 +224,19 @@ func _spawn_suit_label(scatter: bool = false) -> void:
 	var symbol = SUIT_SYMBOLS[idx]
 	var lbl = Label.new()
 	lbl.text = symbol
-	var font_size = randi_range(44, 100)
+	var font_size = randi_range(22, 50)
 	lbl.add_theme_font_size_override("font_size", font_size)
 	lbl.add_theme_color_override("font_color", SUIT_COLORS_MAP[symbol])
 	lbl.position = Vector2(
-		randf_range(60, SCREEN_W - 160),
-		randf_range(-200, SCREEN_H - 200) if scatter else randf_range(-240, -60)
+		randf_range(30, SCREEN_W - 80),
+		randf_range(-100, SCREEN_H - 100) if scatter else randf_range(-120, -30)
 	)
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	suit_container.add_child(lbl)
 
 	suit_nodes.append({
 		"node": lbl,
-		"vel": Vector2(randf_range(-10, 10), randf_range(30, 65)),
+		"vel": Vector2(randf_range(-5, 5), randf_range(15, 32.5)),
 		"phase": randf() * TAU,
 		"rot_speed": randf_range(-0.3, 0.3),
 	})
@@ -258,7 +258,7 @@ func _process(delta: float) -> void:
 		var t = clampf(transition_timer / TRANSITION_DURATION, 0.0, 1.0)
 		var ease_t = t * t
 		modulate.a = 1.0 - ease_t
-		position.y = -ease_t * 200.0
+		position.y = -ease_t * 100.0
 		## 音乐淡出
 		if bgm_player and bgm_player.playing:
 			bgm_player.volume_db = lerpf(-5.0, -40.0, ease_t)
@@ -277,10 +277,10 @@ func _process(delta: float) -> void:
 		var t = elapsed / 0.8
 		var ease_t = 1.0 - pow(1.0 - t, 3.0)
 		title_label.modulate.a = clampf(t * 1.5, 0.0, 1.0)
-		title_label.position.y = lerpf(80, 240, ease_t)
+		title_label.position.y = lerpf(40, 120, ease_t)
 	else:
 		title_label.modulate.a = 1.0
-		title_label.position.y = 240
+		title_label.position.y = 120
 		var pulse = 0.92 + sin(elapsed * 1.5) * 0.08
 		title_label.add_theme_color_override("font_color",
 			Color(0.95 * pulse, 0.85 * pulse, 0.3 * pulse))
@@ -292,7 +292,7 @@ func _process(delta: float) -> void:
 	## 按钮呼吸
 	if elapsed > 2.0:
 		start_button.modulate.a = clampf((elapsed - 2.0) * 1.2, 0.0, 1.0)
-		start_button.position.y = CENTER_Y + 560 + sin(elapsed * 2.0) * 8.0
+		start_button.position.y = CENTER_Y + 280 + sin(elapsed * 2.0) * 4.0
 
 	## 版本号
 	if elapsed > 2.5:
@@ -321,9 +321,9 @@ func _process(delta: float) -> void:
 			to_remove.append(i)
 			continue
 		node.position += data["vel"] * delta
-		node.position.x += sin(elapsed * 0.7 + data["phase"]) * 15.0 * delta
+		node.position.x += sin(elapsed * 0.7 + data["phase"]) * 7.5 * delta
 		node.rotation += data["rot_speed"] * delta
-		if node.position.y > SCREEN_H + 50:
+		if node.position.y > SCREEN_H + 25:
 			to_remove.append(i)
 			node.queue_free()
 	to_remove.reverse()
