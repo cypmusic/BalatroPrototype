@@ -20,10 +20,9 @@ const BTN_W: float = 720.0
 const BTN_H: float = 104.0
 const BTN_SPACING: float = 128.0
 
-## Title 模式面板 (右侧偏下)
+## Title 模式面板 (居中偏下)
 const TITLE_PANEL_W: float = 1200.0
 const TITLE_PANEL_H: float = 1100.0
-const TITLE_PANEL_RIGHT_MARGIN: float = 200.0
 const TITLE_PANEL_BOTTOM_MARGIN: float = 160.0
 
 ## 收藏页大面板常量
@@ -117,8 +116,8 @@ func _get_panel_rect() -> Rect2:
 			CENTER_Y - MENU_H / 2.0,
 			MENU_W, MENU_H)
 	else:
-		## Title 主菜单：面板靠右下角
-		var px = SCREEN_W - TITLE_PANEL_W - TITLE_PANEL_RIGHT_MARGIN
+		## Title 主菜单：水平居中，靠下
+		var px = CENTER_X - TITLE_PANEL_W / 2.0
 		var py = SCREEN_H - TITLE_PANEL_H - TITLE_PANEL_BOTTOM_MARGIN
 		return Rect2(px, py, TITLE_PANEL_W, TITLE_PANEL_H)
 
