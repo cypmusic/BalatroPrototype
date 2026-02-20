@@ -20,9 +20,11 @@ const BTN_W: float = 720.0
 const BTN_H: float = 104.0
 const BTN_SPACING: float = 128.0
 
-## Title 模式面板 (较小，靠下)
-const TITLE_PANEL_H: float = 960.0
-const TITLE_PANEL_BOTTOM_MARGIN: float = 120.0
+## Title 模式面板 (右侧偏下)
+const TITLE_PANEL_W: float = 1200.0
+const TITLE_PANEL_H: float = 1100.0
+const TITLE_PANEL_RIGHT_MARGIN: float = 200.0
+const TITLE_PANEL_BOTTOM_MARGIN: float = 160.0
 
 ## 收藏页大面板常量
 const COLL_W: float = 3000.0
@@ -108,16 +110,17 @@ func _make_button(text: String, pos: Vector2, font_size: int,
 
 ## 获取当前模式下菜单面板的矩形区域
 func _get_panel_rect() -> Rect2:
-	if mode == MenuMode.PAUSE:
+	if mode == MenuMode.PAUSE or current_panel != SubPanel.NONE:
+		## 暂停模式 或 子面板（设置/收藏/教程）统一用居中大面板
 		return Rect2(
 			CENTER_X - MENU_W / 2.0,
 			CENTER_Y - MENU_H / 2.0,
 			MENU_W, MENU_H)
 	else:
+		## Title 主菜单：面板靠右下角
+		var px = SCREEN_W - TITLE_PANEL_W - TITLE_PANEL_RIGHT_MARGIN
 		var py = SCREEN_H - TITLE_PANEL_H - TITLE_PANEL_BOTTOM_MARGIN
-		return Rect2(
-			CENTER_X - MENU_W / 2.0,
-			py, MENU_W, TITLE_PANEL_H)
+		return Rect2(px, py, TITLE_PANEL_W, TITLE_PANEL_H)
 
 ## ========== 主菜单 ==========
 
@@ -163,6 +166,8 @@ func _build_main_menu() -> void:
 	## 按钮垂直居中在面板内
 	var btn_count = buttons.size()
 	var total_btn_h = btn_count * BTN_H + (btn_count - 1) * (BTN_SPACING - BTN_H)
+	var panel_cx = pr.position.x + pr.size.x / 2.0
+	var cur_btn_w = min(BTN_W, pr.size.x - 80)
 	var start_y: float
 	if mode == MenuMode.PAUSE:
 		start_y = pr.position.y + 220
@@ -171,8 +176,8 @@ func _build_main_menu() -> void:
 
 	for i in range(btn_count):
 		add_child(_make_button(buttons[i]["text"],
-			Vector2(CENTER_X - BTN_W/2, start_y + i * BTN_SPACING),
-			44, BTN_W, BTN_H, buttons[i]["callback"]))
+			Vector2(panel_cx - cur_btn_w / 2, start_y + i * BTN_SPACING),
+			44, cur_btn_w, BTN_H, buttons[i]["callback"]))
 
 	add_child(_make_label(GameConfig.VERSION_LABEL,
 		Vector2(pr.position.x, pr.position.y + pr.size.y - 80),
