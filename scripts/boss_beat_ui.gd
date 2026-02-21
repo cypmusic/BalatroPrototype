@@ -20,6 +20,9 @@ const GRADE_DISPLAY_TIME: float = 1.5
 ## 警告闪烁（最后4小节）
 var warning_flash: float = 0.0
 
+## 节拍时钟引用（由 main.gd 注入）
+var bc: BeatClockSystem = null
+
 func _ready() -> void:
 	visible = false
 	z_index = 30
@@ -57,23 +60,23 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	if not visible:
+	if not visible or bc == null:
 		return
-	if not BeatClock.is_active or not BeatClock.is_boss_round:
+	if not bc.is_active or not bc.is_boss_round:
 		return
 
 	var GC = GameConfig
 
 	## ─── BPM 标签 ───
-	var bpm_text = str(int(BeatClock.current_bpm)) + " BPM"
+	var bpm_text = str(int(bc.current_bpm)) + " BPM"
 	draw_string(ThemeDB.fallback_font,
 		Vector2(BAR_X, BPM_LABEL_Y),
 		bpm_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14,
 		Color(0.6, 0.6, 0.55))
 
 	## ─── 计时进度条 ───
-	var progress = BeatClock.get_timer_progress()
-	var is_warning = BeatClock.bars_remaining <= 4
+	var progress = bc.get_timer_progress()
+	var is_warning = bc.bars_remaining <= 4
 
 	## 背景
 	draw_rect(Rect2(BAR_X, BAR_Y, BAR_W, BAR_H), Color(0.12, 0.12, 0.12))
@@ -96,7 +99,7 @@ func _draw() -> void:
 		Color(0.4, 0.4, 0.4), false, 1.0)
 
 	## 剩余小节数
-	var bars_text = str(BeatClock.bars_remaining) + "/" + str(BeatClock.PLAY_TIMER_BARS)
+	var bars_text = str(bc.bars_remaining) + "/" + str(BeatClockSystem.PLAY_TIMER_BARS)
 	var bars_color = Color(0.9, 0.3, 0.3) if is_warning else Color(0.6, 0.6, 0.55)
 	draw_string(ThemeDB.fallback_font,
 		Vector2(BAR_X + BAR_W + 12, BAR_Y + 10),
@@ -104,8 +107,8 @@ func _draw() -> void:
 
 	## ─── 拍点指示器（4个点 = 1小节内4拍）───
 	var beat_spacing = BAR_W / 16.0  ## 16小节对应16段
-	var current_beat = BeatClock.current_beat
-	var beat_progress = BeatClock.get_beat_progress()
+	var current_beat = bc.current_beat
+	var beat_progress = bc.get_beat_progress()
 
 	for i in range(4):
 		var dot_x = BAR_X + 30 + i * 80
@@ -132,14 +135,14 @@ func _draw() -> void:
 			draw_circle(Vector2(dot_x, BEAT_DOT_Y), dot_size + 3, Color(dot_color.r, dot_color.g, dot_color.b, 0.2))
 
 	## ─── Bonus池信息 ───
-	var bonus_text = "Bonus: " + str(BeatClock.total_bonus_earned) + " / " + str(BeatClock.bonus_pool)
+	var bonus_text = "Bonus: " + str(bc.total_bonus_earned) + " / " + str(bc.bonus_pool)
 	draw_string(ThemeDB.fallback_font,
 		Vector2(BAR_X, BONUS_INFO_Y),
 		bonus_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13,
 		Color(0.7, 0.65, 0.5))
 
 	## 每手上限
-	var cap_text = Loc.i().t("Per hand cap") + ": " + str(BeatClock.get_per_hand_bonus_cap())
+	var cap_text = Loc.i().t("Per hand cap") + ": " + str(bc.get_per_hand_bonus_cap())
 	draw_string(ThemeDB.fallback_font,
 		Vector2(BAR_X + 250, BONUS_INFO_Y),
 		cap_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13,

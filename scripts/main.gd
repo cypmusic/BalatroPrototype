@@ -72,10 +72,15 @@ var fade_hold_timer: float = 0.0
 ## ========== 快捷引用 ==========
 var GS: Node  ## GameState
 var GC  ## GameConfig (script class, not node)
+var BC: BeatClockSystem  ## 节拍时钟（本地创建，非AutoLoad）
 
 func _ready() -> void:
 	GS = GameState
 	GC = GameConfig
+	## 创建节拍时钟实例（不依赖AutoLoad）
+	BC = BeatClockSystem.new()
+	BC.name = "BeatClock"
+	add_child(BC)
 	RenderingServer.set_default_clear_color(GC.COLOR_BG)
 	HandLevel.reset()
 
@@ -158,7 +163,8 @@ func _ready() -> void:
 	boss_beat_ui.set_script(load("res://scripts/boss_beat_ui.gd"))
 	boss_beat_ui.name = "BossBeatUI"
 	add_child(boss_beat_ui)
-	BeatClock.timer_expired.connect(_on_boss_timer_expired)
+	boss_beat_ui.bc = BC  ## 注入节拍时钟引用
+	BC.timer_expired.connect(_on_boss_timer_expired)
 
 	## 重启用淡出/淡入遮罩
 	fade_overlay = ColorRect.new()
@@ -328,10 +334,10 @@ func _on_blind_selected(blind_type: int, boss) -> void:
 
 	## Boss战启动节拍系统
 	if blind_type == BlindData.BlindType.BOSS_BLIND:
-		BeatClock.start_boss_beat(GS.current_ante, GS.hands_remaining)
+		BC.start_boss_beat(GS.current_ante, GS.hands_remaining)
 		boss_beat_ui.show_ui()
 	else:
-		BeatClock.stop()
+		BC.stop()
 		boss_beat_ui.hide_ui()
 
 	var blind_name = _get_current_blind_name()
@@ -572,10 +578,10 @@ func _on_play_pressed() -> void:
 
 	## Boss战节拍判定
 	var bonus_info: Dictionary = {}
-	if BeatClock.is_active and BeatClock.is_boss_round:
-		bonus_info = BeatClock.judge_boss_play()
-		BeatClock.record_bonus(bonus_info.get("bonus_score", 0))
-		BeatClock.reset_play_timer()
+	if BC.is_active and BC.is_boss_round:
+		bonus_info = BC.judge_boss_play()
+		BC.record_bonus(bonus_info.get("bonus_score", 0))
+		BC.reset_play_timer()
 		boss_beat_ui.show_grade(bonus_info.get("grade", "Miss"), bonus_info.get("bonus_score", 0))
 
 	score_display.show_score(final_result, bonus_info)
@@ -658,8 +664,8 @@ func _finish_discard() -> void:
 	if new_cards.size() > 0:
 		hand.request_auto_sort()
 	## Boss战：补牌增加计时
-	if BeatClock.is_active and BeatClock.is_boss_round and new_cards.size() > 0:
-		BeatClock.add_refill_bars(new_cards.size())
+	if BC.is_active and BC.is_boss_round and new_cards.size() > 0:
+		BC.add_refill_bars(new_cards.size())
 	play_button.disabled = false
 	discard_button.disabled = false
 	_update_ui()
@@ -705,8 +711,8 @@ func _finish_after_exit() -> void:
 	if new_cards.size() > 0:
 		hand.request_auto_sort()
 	## Boss战：补牌增加计时（出牌后补牌）
-	if BeatClock.is_active and BeatClock.is_boss_round and new_cards.size() > 0:
-		BeatClock.add_refill_bars(new_cards.size())
+	if BC.is_active and BC.is_boss_round and new_cards.size() > 0:
+		BC.add_refill_bars(new_cards.size())
 	play_button.disabled = false
 	discard_button.disabled = false
 
@@ -721,7 +727,7 @@ func _trigger_victory() -> void:
 	GS.is_round_ended = true
 	play_button.disabled = true
 	discard_button.disabled = true
-	BeatClock.stop()
+	BC.stop()
 	boss_beat_ui.hide_ui()
 	var reward = BlindData.get_blind_reward(GS.current_blind_type)
 	var income = GS.calculate_income(true) + reward
@@ -735,7 +741,7 @@ func _trigger_defeat() -> void:
 	GS.is_round_ended = true
 	play_button.disabled = true
 	discard_button.disabled = true
-	BeatClock.stop()
+	BC.stop()
 	boss_beat_ui.hide_ui()
 	var blind_name = _get_current_blind_name()
 	await get_tree().create_timer(0.8).timeout
@@ -790,7 +796,7 @@ func _return_to_title() -> void:
 		hexagram_select.reset()
 	if reel_draw:
 		reel_draw.reset()
-	BeatClock.reset()
+	BC.reset()
 	boss_beat_ui.hide_ui()
 	## 重置动态上限
 	joker_slot.MAX_JOKERS = 5
@@ -835,7 +841,7 @@ func _return_to_title_state() -> void:
 		hexagram_select.reset()
 	if reel_draw:
 		reel_draw.reset()
-	BeatClock.reset()
+	BC.reset()
 	boss_beat_ui.hide_ui()
 	joker_slot.MAX_JOKERS = 5
 	consumable_slot.MAX_CONSUMABLES = 2
