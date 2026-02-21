@@ -109,10 +109,17 @@ func _draw_item_card(x: float, y: float, item: Dictionary, index: int) -> void:
 		card_name = t.tarot_name
 		border_color = t.get_rarity_color()
 
+	## 幽冥牌使用更深的暗紫色背景
+	var bg_color := Color(0.08, 0.12, 0.2)
+	if item["type"] == "tarot":
+		var t_item: TarotData = item["data"]
+		if t_item.artifact_type == TarotData.ArtifactType.SPECTER:
+			bg_color = Color(0.06, 0.04, 0.12)
+
 	var bg = ColorRect.new()
 	bg.position = Vector2(x - SLOT_W / 2, y - SLOT_H / 2)
 	bg.size = Vector2(SLOT_W, SLOT_H)
-	bg.color = Color(0.08, 0.12, 0.2)
+	bg.color = bg_color
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 
@@ -192,6 +199,8 @@ func _on_hover(index: int) -> void:
 			if t.max_select > t.min_select:
 				text += "-" + str(t.max_select)
 			text += " " + _l.t("cards") + ")"
+		elif t.needs_joker_selection:
+			text += " (" + _l.t("Select") + " 1 " + _l.t("Beast") + ")"
 	consumable_hovered.emit(text)
 
 func _on_unhover() -> void:

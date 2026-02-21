@@ -755,20 +755,20 @@ Boss目标满分 = 基础分(2/3) + Bonus池(1/3)
 
 ## Phase 2：核心代码实现
 
-- [ ] card_data.gd 新增 Seal 枚举
-- [ ] joker_database.gd 替换为72张异兽数据
-- [ ] 新增 TriggerType / EffectType 扩展（12种效果类型）
-- [ ] tarot_database.gd 重构为36张法宝（法宝16+阵法10+幽冥10）
-- [ ] 新增 spectral_data.gd / spectral_database.gd（幽冥牌）
-- [ ] 新增 seal_effect.gd（灵印效果处理器）
-- [ ] planet_database.gd 替换为28张星宿数据
-- [ ] voucher_database.gd 替换为16卷天书数据
-- [ ] localization.gd 全面中英文更新
-- [ ] 6张出牌系统 + 11种新牌型判定
-- [ ] 64卦路线选择界面
-- [ ] BeatClock 节律时钟单例
-- [ ] 天机抽牌UI + 逻辑
-- [ ] Boss战限时出牌 + Bonus池计分
+- [x] card_data.gd 新增 Seal 枚举 ✅
+- [x] joker_database.gd 替换为72张异兽数据 ✅
+- [x] 新增 TriggerType / EffectType 扩展（12种效果类型） ✅
+- [x] tarot_database.gd 重构为36张法宝（法宝16+阵法10+幽冥10） ✅
+- [x] 新增 spectral_data.gd / spectral_database.gd（幽冥牌） ✅ → 已整合入tarot系统
+- [x] 新增 seal_effect.gd（灵印效果处理器） ✅
+- [x] planet_database.gd 替换为28张星宿数据 ✅
+- [x] voucher_database.gd 替换为16卷天书数据 ✅
+- [x] BeatClock 节律时钟单例 ✅
+- [x] localization.gd 全面中英文更新 ✅
+- [x] 6张出牌系统 + 11种新牌型判定 ✅
+- [x] 64卦路线选择界面 ✅
+- [x] 天机抽牌UI + 逻辑 ✅
+- [x] Boss战限时出牌 + Bonus池计分 ✅
 
 ## Phase 3：美术资源
 

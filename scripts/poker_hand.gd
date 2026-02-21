@@ -1,5 +1,5 @@
 ## poker_hand.gd
-## 扑克牌型判定与计分系统 V0.085 — 28种牌型 + 6卡支持
+## 扑克牌型判定与计分系统 V0.086 — 28种牌型 + 6卡支持
 ## 支持5卡基础牌型(10种) + 6卡扩展牌型(18种)
 class_name PokerHand
 extends RefCounted
@@ -184,8 +184,8 @@ static func evaluate(cards: Array) -> Dictionary:
 
 	## ====== 6卡判定优先（仅当出了6张牌时） ======
 	if n == 6:
-		## 皇家六条: 6张同花+同点+皇家
-		if is_all_flush and count_groups.has(6):
+		## 皇家六条: 6张同花+同点+皇家点数(10/J/Q/K/A)
+		if is_all_flush and count_groups.has(6) and _is_royal_rank(ranks[0]):
 			return {"type": HandType.ROYAL_SIX_KIND, "scoring_cards": cards}
 
 		## 同花六条: 6张同花+同点
@@ -501,6 +501,10 @@ static func _is_royal_six(ranks: Array[int]) -> bool:
 			adjusted.append(r)
 	adjusted.sort()
 	return adjusted == [9, 10, 11, 12, 13, 14]
+
+## 检查是否为皇家点数(10/J/Q/K/A)
+static func _is_royal_rank(rank: int) -> bool:
+	return rank == 1 or rank >= 10  ## A=1, 10, J=11, Q=12, K=13
 
 ## 获取点数频率分组 {频率: 出现次数}
 static func _get_count_groups(rank_counts: Dictionary) -> Dictionary:

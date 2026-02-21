@@ -1,5 +1,5 @@
 ## game_state.gd
-## 全局游戏状态单例 (AutoLoad) — V0.071
+## 全局游戏状态单例 (AutoLoad) — V0.086
 ## 集中管理可变游戏状态，与 UI 脱耦
 ## 在 Project Settings → AutoLoad 中注册为 "GameState"
 extends Node
@@ -24,6 +24,16 @@ var hands_remaining: int = GameConfig.STARTING_HANDS
 var discards_remaining: int = GameConfig.STARTING_DISCARDS
 var hands_played_this_round: int = 0
 var total_discarded: int = 0
+
+## ========== 手牌上限（幽冥牌可修改）==========
+var hand_size_modifier: int = 0  ## 永久手牌上限修正值（负数=减少）
+
+## ========== 出牌上限（天书"阴符经"可提升）==========
+var max_play_cards_bonus: int = 0  ## 出牌上限加成（阴符经+1，解锁6张牌型）
+
+## ========== 64卦路线 ==========
+var current_hexagram: int = -1       ## 当前卦（文王序），-1=未选择
+var hexagram_effect_id: String = ""  ## 当前卦的效果ID
 
 ## ========== 经济 ==========
 var _money: int = GameConfig.STARTING_MONEY
@@ -56,6 +66,10 @@ func reset() -> void:
 	hands_played_this_round = 0
 	total_discarded = 0
 	_money = GameConfig.STARTING_MONEY
+	hand_size_modifier = 0
+	max_play_cards_bonus = 0
+	current_hexagram = -1
+	hexagram_effect_id = ""
 
 	is_score_animating = false
 	is_discarding = false
@@ -109,6 +123,16 @@ func calculate_income(won: bool) -> int:
 	if won:
 		income += GameConfig.WIN_BONUS
 	return income
+
+## ========== 动态上限计算 ==========
+
+## 当前有效手牌数（基础8 + 幽冥修正）
+func get_effective_hand_size() -> int:
+	return maxi(1, GameConfig.INITIAL_HAND_SIZE + hand_size_modifier)
+
+## 当前出牌上限（基础5 + 天书加成）
+func get_max_play_cards() -> int:
+	return GameConfig.MAX_SELECT + max_play_cards_bonus
 
 ## 检查是否被遮罩界面覆盖（由 main 调用更新）
 var overlay_active: bool = false

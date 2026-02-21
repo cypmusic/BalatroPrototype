@@ -1,5 +1,5 @@
 ## tarot_effect.gd
-## 法宝牌效果处理器 V0.085 — 适配26种新TarotEffect枚举
+## 法宝牌效果处理器 V0.086 — 适配36种TarotEffect枚举（含幽冥牌）
 ## 静态函数处理所有法宝牌效果，返回结果描述
 class_name TarotEffectProcessor
 extends RefCounted
@@ -178,6 +178,139 @@ static func apply(tarot: TarotData, selected_cards: Array,
 			## 落魂阵：全手牌 +2 Mult
 			result["message"] = "👻 " + loc.t(tarot.tarot_name) + "! " + loc.t("All cards +2 Mult")
 			result["color"] = Color(0.85, 0.25, 0.25)
+
+		## ===== 幽冥效果 (Specter) =====
+
+		TarotData.TarotEffect.SPECTER_TRANSFORM_FACE:
+			## 招魂幡：销毁1随机手牌→生成3张增强人头牌
+			if hand_ref and hand_ref.cards_in_hand.size() > 0:
+				var victim = hand_ref.cards_in_hand[randi() % hand_ref.cards_in_hand.size()]
+				var victim_name = victim.card_data.get_display_name()
+				hand_ref.cards_in_hand.erase(victim)
+				victim.queue_free()
+				var faces = [CardData.Rank.JACK, CardData.Rank.QUEEN, CardData.Rank.KING]
+				var enhancements = [CardData.Enhancement.FOIL, CardData.Enhancement.HOLOGRAPHIC, CardData.Enhancement.POLYCHROME]
+				for _i in range(3):
+					var new_data = CardData.new()
+					new_data.suit = [CardData.Suit.HEARTS, CardData.Suit.DIAMONDS,
+									CardData.Suit.CLUBS, CardData.Suit.SPADES][randi() % 4]
+					new_data.rank = faces[randi() % faces.size()]
+					new_data.enhancement = enhancements[randi() % enhancements.size()]
+					hand_ref.add_card(new_data, true)
+				hand_ref._arrange_cards()
+				hand_ref.hand_changed.emit()
+				result["message"] = "👻 " + loc.t("Destroyed") + " " + victim_name + " → +3 " + loc.t("enhanced face cards") + "!"
+				result["color"] = Color(0.15, 0.12, 0.3)
+
+		TarotData.TarotEffect.SPECTER_TRANSFORM_NUMBER:
+			## 生死簿：销毁1随机手牌→生成4张增强数字牌
+			if hand_ref and hand_ref.cards_in_hand.size() > 0:
+				var victim = hand_ref.cards_in_hand[randi() % hand_ref.cards_in_hand.size()]
+				var victim_name = victim.card_data.get_display_name()
+				hand_ref.cards_in_hand.erase(victim)
+				victim.queue_free()
+				var numbers = [CardData.Rank.TWO, CardData.Rank.THREE, CardData.Rank.FOUR,
+							CardData.Rank.FIVE, CardData.Rank.SIX, CardData.Rank.SEVEN,
+							CardData.Rank.EIGHT, CardData.Rank.NINE, CardData.Rank.TEN]
+				var enhancements = [CardData.Enhancement.FOIL, CardData.Enhancement.HOLOGRAPHIC, CardData.Enhancement.POLYCHROME]
+				for _i in range(4):
+					var new_data = CardData.new()
+					new_data.suit = [CardData.Suit.HEARTS, CardData.Suit.DIAMONDS,
+									CardData.Suit.CLUBS, CardData.Suit.SPADES][randi() % 4]
+					new_data.rank = numbers[randi() % numbers.size()]
+					new_data.enhancement = enhancements[randi() % enhancements.size()]
+					hand_ref.add_card(new_data, true)
+				hand_ref._arrange_cards()
+				hand_ref.hand_changed.emit()
+				result["message"] = "📖 " + loc.t("Destroyed") + " " + victim_name + " → +4 " + loc.t("enhanced number cards") + "!"
+				result["color"] = Color(0.15, 0.12, 0.3)
+
+		TarotData.TarotEffect.SPECTER_BATCH_SUIT:
+			## 六道轮回：手中所有牌变同一随机花色
+			if hand_ref and hand_ref.cards_in_hand.size() > 0:
+				var target_suit = [CardData.Suit.HEARTS, CardData.Suit.DIAMONDS,
+								CardData.Suit.CLUBS, CardData.Suit.SPADES][randi() % 4]
+				for card in hand_ref.cards_in_hand:
+					card.card_data.suit = target_suit
+					card.queue_redraw()
+				var suit_data = CardData.new()
+				suit_data.suit = target_suit
+				var symbol = suit_data.get_suit_symbol()
+				result["message"] = "🔄 " + loc.t("All cards became") + " " + symbol + "!"
+				result["color"] = Color(0.15, 0.12, 0.3)
+
+		TarotData.TarotEffect.SPECTER_BATCH_RANK:
+			## 夺舍：手中所有牌变同一随机点数，手牌上限-1
+			if hand_ref and hand_ref.cards_in_hand.size() > 0:
+				var ranks = CardData.Rank.values()
+				var target_rank = ranks[randi() % ranks.size()]
+				for card in hand_ref.cards_in_hand:
+					card.card_data.rank = target_rank
+					card.queue_redraw()
+				GameState.hand_size_modifier -= 1
+				result["message"] = "💀 " + loc.t("All cards became same rank") + "! " + loc.t("Hand size") + " -1"
+				result["color"] = Color(0.15, 0.12, 0.3)
+
+		TarotData.TarotEffect.SPECTER_CREATE_LEGEND:
+			## 封神：创建1张传说级异兽牌（由main.gd处理异兽栏位逻辑）
+			result["message"] = "⭐ " + loc.t("Deification") + "! " + loc.t("A Legendary Beast appears!")
+			result["color"] = Color(0.95, 0.75, 0.2)
+			result["create_legendary"] = true
+
+		TarotData.TarotEffect.SPECTER_UPGRADE_ALL:
+			## 天劫：所有牌型等级+1
+			var types = PokerHand.HandType.values()
+			for ht in types:
+				HandLevel.planet_level_up(ht, 20, 1)
+			result["message"] = "⚡ " + loc.t("Heavenly Tribulation") + "! " + loc.t("All hand types") + " +1!"
+			result["color"] = Color(0.95, 0.75, 0.2)
+
+		TarotData.TarotEffect.SPECTER_DESTROY_FOR_GOLD:
+			## 焚身：销毁5张随机手牌→$20
+			if hand_ref:
+				var destroyed = 0
+				var to_destroy = mini(5, hand_ref.cards_in_hand.size())
+				for _i in range(to_destroy):
+					if hand_ref.cards_in_hand.is_empty():
+						break
+					var idx = randi() % hand_ref.cards_in_hand.size()
+					var card = hand_ref.cards_in_hand[idx]
+					hand_ref.cards_in_hand.erase(card)
+					card.queue_free()
+					destroyed += 1
+				if destroyed > 0:
+					hand_ref._arrange_cards()
+					hand_ref.hand_changed.emit()
+				GameState.money += 20
+				result["message"] = "🔥 " + loc.t("Destroyed") + " " + str(destroyed) + " " + loc.t("cards") + " → +$20!"
+				result["color"] = Color(0.15, 0.12, 0.3)
+
+		TarotData.TarotEffect.SPECTER_JOKER_PHANTOM:
+			## 离魂术：随机异兽获得虚相，手牌上限-1（由main.gd处理异兽逻辑）
+			GameState.hand_size_modifier -= 1
+			result["message"] = "👁️ " + loc.t("Soul Separation") + "! " + loc.t("Hand size") + " -1"
+			result["color"] = Color(0.15, 0.12, 0.3)
+			result["joker_phantom"] = true
+
+		TarotData.TarotEffect.SPECTER_DUPLICATE_CARDS:
+			## 分身术：选1牌→牌组中创建2张副本
+			if selected_cards.size() >= 1:
+				var src = selected_cards[0]
+				for _i in range(2):
+					var new_data = CardData.new()
+					new_data.suit = src.card_data.suit
+					new_data.rank = src.card_data.rank
+					new_data.enhancement = src.card_data.enhancement
+					new_data.seal = src.card_data.seal
+					hand_ref.add_card(new_data, true)
+				result["message"] = "🔮 " + loc.t("Cloned") + " " + src.card_data.get_display_name() + " ×2!"
+				result["color"] = Color(0.15, 0.12, 0.3)
+
+		TarotData.TarotEffect.SPECTER_JOKER_POLY_PURGE:
+			## 阴阳眼：选中异兽获得多彩，销毁其余（由main.gd处理异兽栏位逻辑）
+			result["message"] = "👁️ " + loc.t("Yin-Yang Eyes") + "! " + loc.t("Polychrome granted, others destroyed")
+			result["color"] = Color(0.15, 0.12, 0.3)
+			result["joker_poly_purge"] = true
 
 	return result
 

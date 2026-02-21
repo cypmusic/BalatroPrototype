@@ -1,5 +1,5 @@
 ## main.gd
-## 游戏主场景 V0.085 — 卡牌增强 + Voucher 系统 (4K)
+## 游戏主场景 V0.086 — 6张出牌 + 天机抽牌 + 动态手牌上限 (4K)
 ## 架构: 场景树化 + 状态单例 + 效果处理器
 extends Node2D
 
@@ -47,6 +47,15 @@ var discard_exit_remaining: int = 0
 
 ## ========== Voucher 状态 ==========
 var owned_voucher_ids: Array = []
+
+## ========== 64卦路线 ==========
+var hexagram_select: Node2D = null
+
+## ========== 天机抽牌 ==========
+var reel_draw: Node2D = null
+
+## ========== Boss战节拍UI ==========
+var boss_beat_ui: Node2D = null
 
 ## ========== TAB 状态面板 ==========
 var status_panel: Node2D = null
@@ -128,6 +137,29 @@ func _ready() -> void:
 	status_panel.name = "StatusPanel"
 	add_child(status_panel)
 
+	## 64卦路线选择
+	hexagram_select = Node2D.new()
+	hexagram_select.set_script(load("res://scripts/hexagram_select.gd"))
+	hexagram_select.name = "HexagramSelect"
+	hexagram_select.z_index = 50
+	add_child(hexagram_select)
+	hexagram_select.hexagram_selected.connect(_on_hexagram_selected)
+
+	## 天机抽牌
+	reel_draw = Node2D.new()
+	reel_draw.set_script(load("res://scripts/reel_draw.gd"))
+	reel_draw.name = "ReelDraw"
+	reel_draw.position = Vector2(GC.CENTER_X, GC.CENTER_Y)
+	add_child(reel_draw)
+	reel_draw.reel_complete.connect(_on_reel_complete)
+
+	## Boss战节拍UI
+	boss_beat_ui = Node2D.new()
+	boss_beat_ui.set_script(load("res://scripts/boss_beat_ui.gd"))
+	boss_beat_ui.name = "BossBeatUI"
+	add_child(boss_beat_ui)
+	BeatClock.timer_expired.connect(_on_boss_timer_expired)
+
 	## 重启用淡出/淡入遮罩
 	fade_overlay = ColorRect.new()
 	fade_overlay.position = Vector2(0, 0)
@@ -162,6 +194,7 @@ func has_voucher(voucher_id: String) -> bool:
 
 func _apply_voucher_bonuses() -> void:
 	## 在每回合开始时应用 voucher 加成
+	GS.max_play_cards_bonus = 0  ## 重置出牌上限加成（每轮重新累计）
 	for vid in owned_voucher_ids:
 		var v = VoucherDatabase.get_voucher_by_id(vid)
 		if v == null:
@@ -178,6 +211,8 @@ func _apply_voucher_bonuses() -> void:
 				joker_slot.MAX_JOKERS = 5 + int(v.value)
 			VoucherData.VoucherEffect.CONSUMABLE_SLOT:
 				consumable_slot.MAX_CONSUMABLES = 2 + int(v.value)
+			VoucherData.VoucherEffect.MAX_PLAY_CARDS:
+				GS.max_play_cards_bonus += int(v.value)
 			## REROLL_DISCOUNT 和 SHOP_DISCOUNT 在 shop.gd 中处理
 
 ## ========== 标题界面（动态创建，因为通关后需要重建）==========
@@ -241,9 +276,29 @@ func _on_title_start_game() -> void:
 		ts.queue_free()
 	_open_blind_select()
 
+## ========== 64卦路线 ==========
+
+func _on_hexagram_selected(kingwen: int) -> void:
+	GS.current_hexagram = kingwen
+	var data = HexagramDatabase.get_hexagram(kingwen)
+	GS.hexagram_effect_id = data.get("effect_id", "")
+	var hex_name = data.get("name", "???")
+	info_label.text = "☰ " + Loc.i().t(hex_name) + " — " + Loc.i().t(data.get("effect_desc", ""))
+	info_label.add_theme_color_override("font_color", HexagramDatabase.get_sixiang_color(kingwen))
+	## 选卦后继续进入盲注选择
+	_open_blind_select()
+
 ## ========== 盲注选择 ==========
 
 func _open_blind_select() -> void:
+	## 每个 Ante 开始时（blind_index==0）先选卦象
+	if GS.blind_index == 0 and GS.current_hexagram < 0:
+		if hexagram_select.current_step == 0 and hexagram_select.route_history.is_empty():
+			hexagram_select.start_new_route()
+		else:
+			hexagram_select.advance_step()
+		return
+
 	if GS.ante_boss == null:
 		GS.ante_boss = BlindData.get_random_boss(GS.current_ante, GS.used_boss_names)
 		GS.used_boss_names.append(GS.ante_boss.name)
@@ -270,6 +325,14 @@ func _on_blind_selected(blind_type: int, boss) -> void:
 	play_button.disabled = false
 	discard_button.disabled = false
 	hand_preview.hide_preview()
+
+	## Boss战启动节拍系统
+	if blind_type == BlindData.BlindType.BOSS_BLIND:
+		BeatClock.start_boss_beat(GS.current_ante, GS.hands_remaining)
+		boss_beat_ui.show_ui()
+	else:
+		BeatClock.stop()
+		boss_beat_ui.hide_ui()
 
 	var blind_name = _get_current_blind_name()
 	info_label.text = Loc.i().t(blind_name) + " - " + Loc.i().t("Target") + ": " + str(target)
@@ -315,6 +378,10 @@ func _apply_skip_reward(reward_id: String) -> void:
 
 func _advance_blind() -> void:
 	GS.advance_blind()
+	## 新 Ante 开始时重置卦象（等待玩家重新选择）
+	if GS.blind_index == 0:
+		GS.current_hexagram = -1
+		GS.hexagram_effect_id = ""
 	if GS.current_ante > GC.MAX_ANTE:
 		_show_game_victory()
 		return
@@ -328,7 +395,7 @@ func _process(delta: float) -> void:
 		_process_fade(delta)
 		return  ## 过渡期间不处理其他逻辑
 
-	var overlay_open = (shop.visible or blind_select.visible or round_result.visible)
+	var overlay_open = (shop.visible or blind_select.visible or round_result.visible or hexagram_select.visible)
 	GS.overlay_active = overlay_open
 	hand.set_process(!overlay_open)
 	consumable_slot.set_process_input(!overlay_open)
@@ -369,11 +436,40 @@ func _process_fade(delta: float) -> void:
 
 	fade_overlay.color = Color(0, 0, 0, fade_alpha)
 
+const REEL_DRAW_COUNT: int = 3  ## 天机抽牌张数
+const AUTO_DEAL_COUNT: int = 5  ## 自动发牌张数
+
 func _draw_initial_hand() -> void:
-	var drawn = deck.draw_cards(GC.INITIAL_HAND_SIZE)
-	for card_data in drawn:
+	var hand_size = GS.get_effective_hand_size()
+
+	## 自动发牌部分（前5张）
+	var auto_count = mini(AUTO_DEAL_COUNT, hand_size)
+	var auto_drawn = deck.draw_cards(auto_count)
+	for card_data in auto_drawn:
+		hand.add_card(card_data, true)
+
+	## 天机抽牌部分（后3张）— 启动老虎机式抽牌
+	var reel_count = hand_size - auto_count
+	if reel_count > 0 and deck.remaining() >= reel_count:
+		play_button.disabled = true
+		discard_button.disabled = true
+		var jokers = joker_slot.get_owned_jokers().map(func(j): return j.joker_data)
+		reel_draw.start_reel(GS.current_ante, deck, jokers)
+	else:
+		## 牌堆不足时直接随机抽
+		var extra = deck.draw_cards(reel_count)
+		for card_data in extra:
+			hand.add_card(card_data, true)
+		hand.request_auto_sort()
+		_update_ui()
+
+## 天机抽牌完成回调
+func _on_reel_complete(drawn_cards: Array) -> void:
+	for card_data in drawn_cards:
 		hand.add_card(card_data, true)
 	hand.request_auto_sort()
+	play_button.disabled = false
+	discard_button.disabled = false
 	_update_ui()
 
 func _on_hand_changed() -> void:
@@ -408,8 +504,9 @@ func _update_enhancement_info() -> void:
 		info_label.text = ", ".join(enhance_texts)
 		info_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.2))
 	elif selected.is_empty():
-		## 没有选中任何牌时，恢复默认提示
-		info_label.text = Loc.i().t("Select cards and Play")
+		## 没有选中任何牌时，恢复默认提示（显示当前出牌上限）
+		var max_play = GS.get_max_play_cards()
+		info_label.text = Loc.i().t("Select cards and Play") + " (1~" + str(max_play) + ")"
 		info_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.65))
 
 func _update_preview() -> void:
@@ -441,8 +538,9 @@ func _on_play_pressed() -> void:
 	if selected.is_empty():
 		info_label.text = Loc.i().t("Select cards first")
 		return
-	if selected.size() > GC.MAX_SELECT:
-		info_label.text = "Max " + str(GC.MAX_SELECT) + " cards!"
+	var max_play = GS.get_max_play_cards()
+	if selected.size() > max_play:
+		info_label.text = Loc.i().t("Max") + " " + str(max_play) + " " + Loc.i().t("cards") + "!"
 		return
 
 	var base_result = PokerHand.calculate_score(selected)
@@ -471,9 +569,20 @@ func _on_play_pressed() -> void:
 	var scoring_cards = base_result["scoring_cards"]
 	for i in range(scoring_cards.size()):
 		scoring_cards[i].play_score_animation(i * 0.12)
-	score_display.show_score(final_result)
+
+	## Boss战节拍判定
+	var bonus_info: Dictionary = {}
+	if BeatClock.is_active and BeatClock.is_boss_round:
+		bonus_info = BeatClock.judge_boss_play()
+		BeatClock.record_bonus(bonus_info.get("bonus_score", 0))
+		BeatClock.reset_play_timer()
+		boss_beat_ui.show_grade(bonus_info.get("grade", "Miss"), bonus_info.get("bonus_score", 0))
+
+	score_display.show_score(final_result, bonus_info)
 
 	var info_text = final_result["hand_name"] + "! +" + str(final_result["final_score"])
+	if bonus_info.size() > 0 and bonus_info.get("bonus_score", 0) > 0:
+		info_text += " [" + Loc.i().t(bonus_info["grade"]) + " +" + str(bonus_info["bonus_score"]) + " Bonus]"
 	if not joker_result["joker_triggers"].is_empty():
 		var trigger_texts: PackedStringArray = []
 		for trigger in joker_result["joker_triggers"]:
@@ -491,6 +600,19 @@ func _on_play_pressed() -> void:
 	play_button.disabled = true
 	discard_button.disabled = true
 	GS.use_hand()
+
+## ========== Boss战超时自动出牌 ==========
+
+func _on_boss_timer_expired() -> void:
+	if GS.is_round_ended or GS.is_score_animating:
+		return
+	## 超时：自动出牌（当前选中的牌，或最左边1张）
+	var selected = hand.get_selected_cards()
+	if selected.is_empty() and hand.cards_in_hand.size() > 0:
+		## 选最左边1张牌
+		hand.cards_in_hand[0].is_selected = true
+	## 用 Miss 判定自动出牌
+	_on_play_pressed()
 
 ## ========== 弃牌 ==========
 
@@ -529,12 +651,15 @@ func _on_discard_exit_done(card_node: Node2D) -> void:
 
 func _finish_discard() -> void:
 	GS.is_discarding = false
-	var to_draw = GC.INITIAL_HAND_SIZE - hand.cards_in_hand.size()
+	var to_draw = GS.get_effective_hand_size() - hand.cards_in_hand.size()
 	var new_cards = deck.draw_cards(to_draw)
 	for card_data in new_cards:
 		hand.add_card(card_data, true)
 	if new_cards.size() > 0:
 		hand.request_auto_sort()
+	## Boss战：补牌增加计时
+	if BeatClock.is_active and BeatClock.is_boss_round and new_cards.size() > 0:
+		BeatClock.add_refill_bars(new_cards.size())
 	play_button.disabled = false
 	discard_button.disabled = false
 	_update_ui()
@@ -573,12 +698,15 @@ func _finish_after_exit() -> void:
 		_trigger_victory()
 		return
 
-	var to_draw = GC.INITIAL_HAND_SIZE - hand.cards_in_hand.size()
+	var to_draw = GS.get_effective_hand_size() - hand.cards_in_hand.size()
 	var new_cards = deck.draw_cards(to_draw)
 	for card_data in new_cards:
 		hand.add_card(card_data, true)
 	if new_cards.size() > 0:
 		hand.request_auto_sort()
+	## Boss战：补牌增加计时（出牌后补牌）
+	if BeatClock.is_active and BeatClock.is_boss_round and new_cards.size() > 0:
+		BeatClock.add_refill_bars(new_cards.size())
 	play_button.disabled = false
 	discard_button.disabled = false
 
@@ -593,6 +721,8 @@ func _trigger_victory() -> void:
 	GS.is_round_ended = true
 	play_button.disabled = true
 	discard_button.disabled = true
+	BeatClock.stop()
+	boss_beat_ui.hide_ui()
 	var reward = BlindData.get_blind_reward(GS.current_blind_type)
 	var income = GS.calculate_income(true) + reward
 	GS.money += income
@@ -605,6 +735,8 @@ func _trigger_defeat() -> void:
 	GS.is_round_ended = true
 	play_button.disabled = true
 	discard_button.disabled = true
+	BeatClock.stop()
+	boss_beat_ui.hide_ui()
 	var blind_name = _get_current_blind_name()
 	await get_tree().create_timer(0.8).timeout
 	round_result.show_defeat(score_display.round_score, score_display.target_score, blind_name)
@@ -654,6 +786,12 @@ func _return_to_title() -> void:
 	owned_voucher_ids.clear()
 	if status_panel:
 		status_panel.reset_tracking()
+	if hexagram_select:
+		hexagram_select.reset()
+	if reel_draw:
+		reel_draw.reset()
+	BeatClock.reset()
+	boss_beat_ui.hide_ui()
 	## 重置动态上限
 	joker_slot.MAX_JOKERS = 5
 	consumable_slot.MAX_CONSUMABLES = 2
@@ -693,6 +831,12 @@ func _return_to_title_state() -> void:
 	owned_voucher_ids.clear()
 	if status_panel:
 		status_panel.reset_tracking()
+	if hexagram_select:
+		hexagram_select.reset()
+	if reel_draw:
+		reel_draw.reset()
+	BeatClock.reset()
+	boss_beat_ui.hide_ui()
 	joker_slot.MAX_JOKERS = 5
 	consumable_slot.MAX_CONSUMABLES = 2
 	while joker_slot.get_owned_jokers().size() > 0:

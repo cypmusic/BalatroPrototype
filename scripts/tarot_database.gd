@@ -1,5 +1,6 @@
 ## tarot_database.gd
-## 法宝数据库 V0.085 — 26张法宝牌（16神器 + 10阵法）
+## 法宝数据库 V0.086 — 36张法宝牌（16神器 + 10阵法 + 10幽冥）
+## 36天罡：神器(精密改造) + 阵法(环境改变) + 幽冥(极端高风险)
 class_name TarotDatabase
 extends RefCounted
 
@@ -378,15 +379,164 @@ static func get_all_tarots() -> Array[TarotData]:
 	t.max_select = 0
 	tarots.append(t)
 
+	## ============================================================
+	## 法宝·幽冥 (10张) — Specters (十殿阎罗)
+	## 极端改造，高风险高回报。仅从幽冥牌包获取。
+	## ============================================================
+
+	## A-S01 招魂幡 — 销毁1随机牌→生成3张增强人头牌
+	t = TarotData.new()
+	t.id = "soul_banner"
+	t.tarot_name = "Soul-Calling Banner"
+	t.description = "Destroy 1 random card, create 3 enhanced face cards"
+	t.emoji = "👻"
+	t.effect = TarotData.TarotEffect.SPECTER_TRANSFORM_FACE
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S02 生死簿 — 销毁1随机牌→生成4张增强数字牌
+	t = TarotData.new()
+	t.id = "book_of_life_death"
+	t.tarot_name = "Book of Life and Death"
+	t.description = "Destroy 1 random card, create 4 enhanced number cards"
+	t.emoji = "📖"
+	t.effect = TarotData.TarotEffect.SPECTER_TRANSFORM_NUMBER
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S03 六道轮回 — 手中所有牌变同一随机花色
+	t = TarotData.new()
+	t.id = "six_paths"
+	t.tarot_name = "Six Paths of Reincarnation"
+	t.description = "All cards in hand become a single random suit"
+	t.emoji = "🔄"
+	t.effect = TarotData.TarotEffect.SPECTER_BATCH_SUIT
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S04 夺舍 — 手中所有牌变同一随机点数，手牌上限-1
+	t = TarotData.new()
+	t.id = "soul_possession"
+	t.tarot_name = "Soul Possession"
+	t.description = "All cards become single random rank. -1 hand size"
+	t.emoji = "💀"
+	t.effect = TarotData.TarotEffect.SPECTER_BATCH_RANK
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S05 封神 — 创建1张传说级异兽牌
+	t = TarotData.new()
+	t.id = "deification"
+	t.tarot_name = "Deification"
+	t.description = "Create 1 Legendary Beast card"
+	t.emoji = "⭐"
+	t.effect = TarotData.TarotEffect.SPECTER_CREATE_LEGEND
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S06 天劫 — 所有牌型等级+1
+	t = TarotData.new()
+	t.id = "heavenly_tribulation"
+	t.tarot_name = "Heavenly Tribulation"
+	t.description = "Level up ALL hand types by 1"
+	t.emoji = "⚡"
+	t.effect = TarotData.TarotEffect.SPECTER_UPGRADE_ALL
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S07 焚身 — 销毁5张随机牌→$20
+	t = TarotData.new()
+	t.id = "self_immolation"
+	t.tarot_name = "Self-Immolation"
+	t.description = "Destroy 5 random cards, gain $20"
+	t.emoji = "🔥"
+	t.effect = TarotData.TarotEffect.SPECTER_DESTROY_FOR_GOLD
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S08 离魂术 — 随机异兽获得虚相(不占栏位)，手牌上限-1
+	t = TarotData.new()
+	t.id = "soul_separation"
+	t.tarot_name = "Soul Separation"
+	t.description = "Random Beast gains Phantom (no slot). -1 hand size"
+	t.emoji = "👁️"
+	t.effect = TarotData.TarotEffect.SPECTER_JOKER_PHANTOM
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
+	## A-S09 分身术 — 选1牌→牌组中创建2张副本
+	t = TarotData.new()
+	t.id = "clone_technique"
+	t.tarot_name = "Clone Technique"
+	t.description = "Select 1 card, create 2 exact copies in deck"
+	t.emoji = "🔮"
+	t.effect = TarotData.TarotEffect.SPECTER_DUPLICATE_CARDS
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = true
+	t.min_select = 1
+	t.max_select = 1
+	tarots.append(t)
+
+	## A-S10 阴阳眼 — 选中1异兽获得多彩(×1.5)，销毁其余
+	t = TarotData.new()
+	t.id = "yin_yang_eyes"
+	t.tarot_name = "Yin-Yang Eyes"
+	t.description = "Selected Beast gains Polychrome (x1.5). Destroy all others"
+	t.emoji = "👁️"
+	t.effect = TarotData.TarotEffect.SPECTER_JOKER_POLY_PURGE
+	t.artifact_type = TarotData.ArtifactType.SPECTER
+	t.cost = 4
+	t.needs_selection = false
+	t.needs_joker_selection = true
+	t.min_select = 0
+	t.max_select = 0
+	tarots.append(t)
+
 	return tarots
 
-## 获取随机N张法宝牌（用于商店）
+## 获取随机N张法宝牌（用于商店，排除幽冥牌——幽冥仅从幽冥牌包获取）
 static func get_random_tarots(count: int) -> Array[TarotData]:
-	var all = get_all_tarots()
-	all.shuffle()
+	var pool: Array[TarotData] = []
+	for t in get_all_tarots():
+		if t.artifact_type != TarotData.ArtifactType.SPECTER:
+			pool.append(t)
+	pool.shuffle()
 	var result: Array[TarotData] = []
-	for i in range(mini(count, all.size())):
-		result.append(all[i])
+	for i in range(mini(count, pool.size())):
+		result.append(pool[i])
 	return result
 
 ## 仅获取神器
@@ -412,3 +562,22 @@ static func get_random_formations(count: int) -> Array[TarotData]:
 	for i in range(mini(count, formations.size())):
 		result.append(formations[i])
 	return result
+
+## 仅获取幽冥牌（用于幽冥牌包）
+static func get_random_specters(count: int) -> Array[TarotData]:
+	var specters: Array[TarotData] = []
+	for t in get_all_tarots():
+		if t.artifact_type == TarotData.ArtifactType.SPECTER:
+			specters.append(t)
+	specters.shuffle()
+	var result: Array[TarotData] = []
+	for i in range(mini(count, specters.size())):
+		result.append(specters[i])
+	return result
+
+## 根据ID查找法宝
+static func get_tarot_by_id(tarot_id: String) -> TarotData:
+	for t in get_all_tarots():
+		if t.id == tarot_id:
+			return t
+	return null

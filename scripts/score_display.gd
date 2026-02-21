@@ -1,5 +1,5 @@
 ## score_display.gd
-## 计分面板 V5 - 显示等级信息、增强计分动画
+## 计分面板 V6 - 显示等级信息、增强计分动画 + Boss Bonus显示
 extends Node2D
 
 var hand_name_label: Label
@@ -7,6 +7,7 @@ var level_label: Label
 var chips_label: Label
 var mult_label: Label
 var score_label: Label
+var bonus_label: Label       ## Boss战Bonus得分行
 var round_score_label: Label
 var level_up_label: Label  ## 升级提示
 
@@ -157,18 +158,29 @@ func _setup_labels() -> void:
 	_f(score_label)
 	add_child(score_label)
 
+	## Boss Bonus行（仅Boss战显示）
+	bonus_label = Label.new()
+	bonus_label.name = "BonusLabel"
+	bonus_label.text = ""
+	bonus_label.position = Vector2(PANEL_X, PANEL_Y + 372)
+	bonus_label.add_theme_font_size_override("font_size", 20)
+	bonus_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.4))
+	bonus_label.visible = false
+	_f(bonus_label)
+	add_child(bonus_label)
+
 	## 升级提示
 	level_up_label = Label.new()
 	level_up_label.name = "LevelUp"
 	level_up_label.text = ""
-	level_up_label.position = Vector2(PANEL_X, PANEL_Y + 375)
+	level_up_label.position = Vector2(PANEL_X, PANEL_Y + 400)
 	level_up_label.add_theme_font_size_override("font_size", 20)
 	level_up_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	level_up_label.visible = false
 	_f(level_up_label)
 	add_child(level_up_label)
 
-func show_score(result: Dictionary) -> void:
+func show_score(result: Dictionary, bonus_info: Dictionary = {}) -> void:
 	## 牌型名称
 	hand_name_label.text = Loc.i().t(result["hand_name"])
 
@@ -185,14 +197,46 @@ func show_score(result: Dictionary) -> void:
 	chips_label.text = Loc.i().t("Chips") + ": " + str(result["total_chips"])
 	mult_label.text = Loc.i().t("Mult") + ": ×" + str(result["total_mult"])
 
-	## 得分公式
-	var this_score: int = result["final_score"]
-	score_label.text = str(result["total_chips"]) + " × " + str(result["total_mult"]) + " = " + str(this_score)
+	## 基础得分
+	var base_score: int = result["final_score"]
+	score_label.text = str(result["total_chips"]) + " × " + str(result["total_mult"]) + " = " + str(base_score)
+
+	## Boss Bonus 显示
+	var total_this_hand: int = base_score
+	if bonus_info.size() > 0 and bonus_info.get("bonus_score", 0) > 0:
+		var grade = bonus_info.get("grade", "")
+		var bonus_score = bonus_info.get("bonus_score", 0)
+		var grade_name = _get_grade_display(grade)
+		bonus_label.text = grade_name + " +" + str(bonus_score) + " Bonus"
+		bonus_label.add_theme_color_override("font_color", _get_grade_color(grade))
+		bonus_label.visible = true
+		total_this_hand += bonus_score
+	elif bonus_info.size() > 0:
+		## Miss — 显示但无Bonus
+		bonus_label.text = Loc.i().t("Miss") + " +0 Bonus"
+		bonus_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		bonus_label.visible = true
+	else:
+		bonus_label.visible = false
 
 	## 滚动动画
-	round_score += this_score
+	round_score += total_this_hand
 	target_round_score = float(round_score)
 	is_rolling = true
+
+func _get_grade_display(grade: String) -> String:
+	match grade:
+		"Perfect": return Loc.i().t("Perfect")
+		"Great": return Loc.i().t("Great")
+		"Good": return Loc.i().t("Good")
+		_: return Loc.i().t("Miss")
+
+func _get_grade_color(grade: String) -> Color:
+	match grade:
+		"Perfect": return Color(0.95, 0.85, 0.3)   ## 金色
+		"Great": return Color(0.75, 0.8, 0.9)       ## 银色
+		"Good": return Color(0.8, 0.65, 0.4)        ## 铜色
+		_: return Color(0.5, 0.5, 0.5)
 
 func show_level_up(hand_name: String, new_level: int) -> void:
 	level_up_label.text = "⬆ " + Loc.i().t(hand_name) + " → Lv." + str(new_level) + "!"
@@ -228,5 +272,8 @@ func reset_round() -> void:
 		mult_label.text = ""
 	if score_label:
 		score_label.text = ""
+	if bonus_label:
+		bonus_label.visible = false
+		bonus_label.text = ""
 	if level_up_label:
 		level_up_label.visible = false
