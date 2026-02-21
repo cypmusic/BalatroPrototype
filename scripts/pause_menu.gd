@@ -25,10 +25,10 @@ const TITLE_PANEL_W: float = 350.0
 const TITLE_PANEL_H: float = 515.0
 const TITLE_PANEL_BOTTOM_MARGIN: float = 290.0
 
-## 收藏页大面板常量
-const COLL_W: float = 1500.0
-const COLL_H: float = 850.0
-const TOOLTIP_W: float = 320.0
+## 收藏页大面板常量 (画册风格)
+const COLL_W: float = 1700.0
+const COLL_H: float = 950.0
+const PREVIEW_W: float = 420.0
 
 enum MenuMode { TITLE, PAUSE }
 var mode: MenuMode = MenuMode.PAUSE
@@ -40,11 +40,18 @@ var current_panel: SubPanel = SubPanel.NONE
 enum CollTab { BEASTS, CONSTELLATIONS, ARTIFACTS }
 var coll_tab: CollTab = CollTab.BEASTS
 
+## 异兽子标签 (-1=全部, 0-3=四象)
+var beast_sx_tab: int = -1
+
+## 预览面板状态
+var _preview_panel: ColorRect = null
+var _preview_tween: Tween = null
+var _hovered_item_key: String = ""
+
 var master_volume: float = 0.8
 var sfx_volume: float = 0.8
 var music_volume: float = 0.8
 var joker_slot_ref = null
-var _tooltip_node: Control = null
 
 func _ready() -> void:
 	visible = false
@@ -291,36 +298,73 @@ func _cycle_language() -> void:
 	language_changed.emit()
 	_open_settings()
 
-## ========== 收藏 ==========
+## ========== 收藏 (画册风格 V2) ==========
 
-func _open_collection() -> void:
-	_clear(); current_panel = SubPanel.COLLECTION
-	_hide_card_tooltip()
-	_add_coll_bg()
-	_add_coll_header(_t("COLLECTION"))
+var _SX_ORDER = [
+	CardLore.SiXiang.AZURE_DRAGON,
+	CardLore.SiXiang.VERMILLION_BIRD,
+	CardLore.SiXiang.WHITE_TIGER,
+	CardLore.SiXiang.BLACK_TORTOISE,
+]
 
+var _RARITY_COLORS = {
+	0: Color(0.3, 0.9, 0.4),   ## Common - 绿
+	1: Color(0.3, 0.6, 0.95),  ## Uncommon - 蓝
+	2: Color(0.9, 0.3, 0.3),   ## Rare - 红
+	3: Color(0.95, 0.8, 0.2),  ## Legendary - 金
+}
+var _RARITY_NAMES = {0: "Common", 1: "Uncommon", 2: "Rare", 3: "Legendary"}
+var _RARITY_EMOJIS = {0: "🟢", 1: "🔵", 2: "🟣", 3: "🟡"}
+
+## — 布局计算 —
+func _get_coll_layout() -> Dictionary:
 	var panel_left = CENTER_X - COLL_W / 2.0
 	var panel_top = CENTER_Y - COLL_H / 2.0
+	var inner_pad = 25.0
+	var header_h = 65.0
+	var tab_bar_h = 45.0
+	var footer_h = 55.0
+	var content_top = panel_top + header_h + tab_bar_h
+	var content_bottom = panel_top + COLL_H - footer_h
+	var content_left = panel_left + inner_pad
+	var content_right = panel_left + COLL_W - inner_pad
+	var grid_w = (content_right - content_left) * 0.58
+	var preview_left = content_left + grid_w + 20
+	var preview_w = content_right - preview_left
+	return {
+		"panel_left": panel_left, "panel_top": panel_top,
+		"content_top": content_top, "content_bottom": content_bottom,
+		"content_left": content_left, "grid_w": grid_w,
+		"preview_left": preview_left, "preview_top": content_top,
+		"preview_w": preview_w, "preview_h": content_bottom - content_top,
+		"tab_y": panel_top + header_h,
+	}
 
-	## — 分类标签按钮 —
-	var tab_y = panel_top + 60
+## — 收藏页入口 —
+func _open_collection() -> void:
+	_clear(); current_panel = SubPanel.COLLECTION
+	_preview_panel = null; _hovered_item_key = ""
+	_add_coll_bg()
+	_add_coll_header(_t("COLLECTION"))
+	var layout = _get_coll_layout()
+
+	## 一级标签
 	var tabs = [
 		{"label": "🐉 " + _t("Beast Cards"), "tab": CollTab.BEASTS, "color": Color(0.3, 0.9, 0.4)},
 		{"label": "⭐ " + _t("Constellation Cards"), "tab": CollTab.CONSTELLATIONS, "color": Color(0.2, 0.55, 0.85)},
 		{"label": "🔮 " + _t("Artifact Cards"), "tab": CollTab.ARTIFACTS, "color": Color(0.7, 0.35, 0.75)},
 	]
-	var tab_w = 210.0
-	var tab_gap = 12.0
+	var tab_w = 220.0; var tab_gap = 14.0
 	var tab_total = tabs.size() * tab_w + (tabs.size() - 1) * tab_gap
-	var tab_start_x = CENTER_X - tab_total / 2.0
+	var tab_start_x = layout["content_left"]
 	for i in range(tabs.size()):
 		var tx = tab_start_x + i * (tab_w + tab_gap)
 		var is_active = (tabs[i]["tab"] == coll_tab)
 		var btn = Button.new()
 		btn.text = tabs[i]["label"]
-		btn.position = Vector2(tx, tab_y)
-		btn.custom_minimum_size = Vector2(tab_w, 32)
-		_loc().apply_font_to_button(btn, 14)
+		btn.position = Vector2(tx, layout["tab_y"])
+		btn.custom_minimum_size = Vector2(tab_w, 34)
+		_loc().apply_font_to_button(btn, 15)
 		if is_active:
 			btn.add_theme_color_override("font_color", tabs[i]["color"])
 		else:
@@ -329,24 +373,24 @@ func _open_collection() -> void:
 		btn.pressed.connect(func(): _switch_coll_tab(tab_val))
 		add_child(btn)
 
-	## — 网格内容区域（无滚动）—
-	var content_top = tab_y + 42
-	var content_bottom = CENTER_Y + COLL_H / 2.0 - 55  ## 返回按钮上方
-	var content_left = panel_left + 20
-	var content_w = COLL_W - 40
+	## 预览面板
+	_build_preview_panel(layout)
 
+	## 异兽子标签 + 网格
 	match coll_tab:
 		CollTab.BEASTS:
-			_fill_beast_grid(content_left, content_top, content_w, content_bottom)
+			_build_beast_sub_tabs(layout)
+			_fill_beast_grid_v2(layout)
 		CollTab.CONSTELLATIONS:
-			_fill_constellation_grid(content_left, content_top, content_w, content_bottom)
+			_fill_constellation_grid_v2(layout)
 		CollTab.ARTIFACTS:
-			_fill_artifact_grid(content_left, content_top, content_w, content_bottom)
+			_fill_artifact_grid_v2(layout)
 
 	_add_coll_back_button()
 
 func _switch_coll_tab(tab: CollTab) -> void:
 	coll_tab = tab
+	beast_sx_tab = -1  ## 切换主标签时重置子标签
 	_open_collection()
 
 ## ---------- 收藏页大面板 ----------
@@ -393,105 +437,331 @@ func _add_coll_back_button() -> void:
 	var btn = _make_button("  ← " + _t("Back") + "  ",
 		Vector2(CENTER_X - 90, by), 18, 180, 40,
 		func(): _build_main_menu())
-	btn.z_index = 10  ## 确保在网格标签之上，防止被遮挡
+	btn.z_index = 10
 	add_child(btn)
 
-## ---------- 异兽网格 (垂直两端对齐) ----------
+## ---------- 预览面板系统 ----------
 
-func _fill_beast_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> void:
+func _build_preview_panel(layout: Dictionary) -> void:
+	var pw = layout["preview_w"]
+	var ph = layout["preview_h"]
+	var px = layout["preview_left"]
+	var py = layout["preview_top"]
+
+	## 预览面板背景
+	_preview_panel = ColorRect.new()
+	_preview_panel.position = Vector2(px, py)
+	_preview_panel.size = Vector2(pw, ph)
+	_preview_panel.color = Color(0.04, 0.06, 0.05, 0.85)
+	_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_preview_panel.z_index = 5
+	add_child(_preview_panel)
+
+	## 预览面板细边框
+	var bw = 1.5; var bc = Color(0.95, 0.85, 0.3, 0.25)
+	for edge in [
+		[Vector2(0, 0), Vector2(pw, bw)],
+		[Vector2(0, ph - bw), Vector2(pw, bw)],
+		[Vector2(0, 0), Vector2(bw, ph)],
+		[Vector2(pw - bw, 0), Vector2(bw, ph)],
+	]:
+		var b = ColorRect.new()
+		b.position = edge[0]; b.size = edge[1]; b.color = bc
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_preview_panel.add_child(b)
+
+	_set_preview_default()
+
+func _set_preview_default() -> void:
+	if not _preview_panel or not is_instance_valid(_preview_panel):
+		return
+	## 清除内容（保留边框，边框是前4个子节点）
+	var children = _preview_panel.get_children()
+	for i in range(children.size()):
+		if i >= 4:  ## 前4个是边框
+			children[i].queue_free()
+
+	var pw = _preview_panel.size.x
+	var ph = _preview_panel.size.y
+
+	## 占位提示
+	var icon_lbl = Label.new()
+	icon_lbl.text = "📖"
+	icon_lbl.position = Vector2(0, ph / 2.0 - 60)
+	icon_lbl.custom_minimum_size = Vector2(pw, 0)
+	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon_lbl.add_theme_font_size_override("font_size", 48)
+	icon_lbl.modulate.a = 0.3
+	icon_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_preview_panel.add_child(icon_lbl)
+
+	var hint_lbl = _make_label(_t("Hover over an item..."),
+		Vector2(0, ph / 2.0 + 10), 14, Color(0.5, 0.5, 0.45),
+		HORIZONTAL_ALIGNMENT_CENTER, pw)
+	hint_lbl.modulate.a = 0.5
+	_preview_panel.add_child(hint_lbl)
+	_hovered_item_key = ""
+
+func _set_preview_content(rows: Array) -> void:
+	if not _preview_panel or not is_instance_valid(_preview_panel):
+		return
+	## 清除旧内容（保留边框）
+	var children = _preview_panel.get_children()
+	for i in range(children.size()):
+		if i >= 4:
+			children[i].queue_free()
+
+	var pw = _preview_panel.size.x
+	var pad_x = 16.0
+	var label_w = 95.0
+	var value_w = pw - label_w - pad_x * 2 - 8
+	var row_y = 16.0
+
+	## 创建内容容器 (用于 fade-in 动画)
+	var container = Control.new()
+	container.position = Vector2.ZERO
+	container.size = _preview_panel.size
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.modulate.a = 0.0
+	_preview_panel.add_child(container)
+
+	for r in rows:
+		var is_header = r.get("header", false)
+		var is_divider = r.get("divider", false)
+
+		if is_divider:
+			var div = ColorRect.new()
+			div.position = Vector2(pad_x, row_y)
+			div.size = Vector2(pw - pad_x * 2, 1)
+			div.color = Color(0.95, 0.85, 0.3, 0.15)
+			div.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			container.add_child(div)
+			row_y += 6
+			continue
+
+		if is_header:
+			var h_lbl = Label.new()
+			h_lbl.text = r.get("value", "")
+			h_lbl.position = Vector2(pad_x, row_y)
+			h_lbl.custom_minimum_size = Vector2(pw - pad_x * 2, 0)
+			h_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			h_lbl.add_theme_color_override("font_color", r.get("color", Color(0.95, 0.85, 0.3)))
+			_loc().apply_font_to_label(h_lbl, r.get("size", 18))
+			h_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			container.add_child(h_lbl)
+			row_y += r.get("size", 18) + 8
+			continue
+
+		## 普通键值行
+		var k_lbl = Label.new()
+		k_lbl.text = r.get("label", "")
+		k_lbl.position = Vector2(pad_x, row_y)
+		k_lbl.custom_minimum_size = Vector2(label_w, 0)
+		k_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.5))
+		_loc().apply_font_to_label(k_lbl, r.get("label_size", 12))
+		k_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		container.add_child(k_lbl)
+
+		var v_lbl = Label.new()
+		v_lbl.text = r.get("value", "")
+		v_lbl.position = Vector2(pad_x + label_w + 8, row_y)
+		v_lbl.custom_minimum_size = Vector2(value_w, 0)
+		v_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		v_lbl.add_theme_color_override("font_color", r.get("color", Color(0.85, 0.85, 0.8)))
+		_loc().apply_font_to_label(v_lbl, r.get("size", 12))
+		v_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		container.add_child(v_lbl)
+
+		## 估算行高
+		var text_len = r.get("value", "").length()
+		var approx_chars = int(value_w / 8)
+		var line_count = maxi(1, ceili(float(text_len) / approx_chars))
+		row_y += line_count * 16 + 5
+
+	## Fade-in 动画
+	if _preview_tween and _preview_tween.is_valid():
+		_preview_tween.kill()
+	_preview_tween = create_tween()
+	_preview_tween.tween_property(container, "modulate:a", 1.0, 0.15)
+
+## — 单元格悬停回调 —
+func _on_cell_hover(item_key: String, rows: Array) -> void:
+	if _hovered_item_key == item_key:
+		return  ## 避免重复刷新
+	_hovered_item_key = item_key
+	_set_preview_content(rows)
+
+func _on_cell_unhover(item_key: String) -> void:
+	## 只有当离开的是当前预览的项目时才重置
+	if _hovered_item_key == item_key:
+		_hovered_item_key = ""
+		## 短暂延迟，防止快速移动时闪烁
+		await get_tree().create_timer(0.08).timeout
+		if _hovered_item_key == "":
+			_set_preview_default()
+
+## ---------- 异兽子标签 ----------
+
+func _build_beast_sub_tabs(layout: Dictionary) -> void:
+	var sub_y = layout["content_top"] - 3
+	var sx_tabs = [{"label": "🔮 " + _t("All"), "idx": -1, "color": Color(0.85, 0.85, 0.8)}]
+	for si in range(4):
+		var info = CardLore.get_si_xiang_info(_SX_ORDER[si])
+		var name_text = _t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]
+		sx_tabs.append({"label": info["emoji"] + " " + name_text, "idx": si, "color": info["color"]})
+
+	var stab_w = 140.0; var stab_gap = 8.0
+	var stab_x = layout["content_left"]
+	for i in range(sx_tabs.size()):
+		var is_active = (sx_tabs[i]["idx"] == beast_sx_tab)
+		var btn = Button.new()
+		btn.text = sx_tabs[i]["label"]
+		btn.position = Vector2(stab_x + i * (stab_w + stab_gap), sub_y)
+		btn.custom_minimum_size = Vector2(stab_w, 28)
+		_loc().apply_font_to_button(btn, 12)
+		if is_active:
+			btn.add_theme_color_override("font_color", sx_tabs[i]["color"])
+		else:
+			btn.add_theme_color_override("font_color", Color(0.4, 0.4, 0.38))
+		var idx_val = sx_tabs[i]["idx"]
+		btn.pressed.connect(func(): _switch_beast_sx_tab(idx_val))
+		add_child(btn)
+
+func _switch_beast_sx_tab(idx: int) -> void:
+	beast_sx_tab = idx
+	_open_collection()
+
+## ---------- 异兽网格 V2 ----------
+
+func _fill_beast_grid_v2(layout: Dictionary) -> void:
 	var all_jokers = JokerDatabase.get_all_jokers()
 
 	## 按四象分组
-	var sx_groups: Dictionary = {
-		CardLore.SiXiang.AZURE_DRAGON: [],
-		CardLore.SiXiang.VERMILLION_BIRD: [],
-		CardLore.SiXiang.WHITE_TIGER: [],
-		CardLore.SiXiang.BLACK_TORTOISE: [],
-	}
+	var sx_groups: Dictionary = {}
+	for sx in _SX_ORDER:
+		sx_groups[sx] = []
 	for joker in all_jokers:
 		var lore = CardLore.get_beast_lore(joker.id)
 		sx_groups[lore["si_xiang"]].append(joker)
 
-	var rarity_colors = {
-		0: Color(0.3, 0.9, 0.4),   ## Common - 绿
-		1: Color(0.3, 0.6, 0.95),  ## Uncommon - 蓝
-		2: Color(0.9, 0.3, 0.3),   ## Rare - 紫红
-		3: Color(0.95, 0.8, 0.2),  ## Legendary - 金
-	}
+	var x0 = layout["content_left"]
+	var y0 = layout["content_top"] + 30  ## 子标签下方
+	var grid_w = layout["grid_w"]
+	var y_bottom = layout["content_bottom"]
 
-	var cols = 9
-	var cell_w = total_w / cols
-	var hdr_h = 22.0      ## 四象标题行高度
-	var box_pad = 5.0    ## 边框内边距
-
-	var sx_order = [
-		CardLore.SiXiang.AZURE_DRAGON,
-		CardLore.SiXiang.VERMILLION_BIRD,
-		CardLore.SiXiang.WHITE_TIGER,
-		CardLore.SiXiang.BLACK_TORTOISE,
-	]
-
-	## 先计算总需求高度，然后按比例分配间距
-	var total_rows = 0
-	for sx in sx_order:
-		total_rows += ceili(float(sx_groups[sx].size()) / cols)
-	## 4组标题 + 所有数据行 的最小高度
-	var min_cell_h = 23.0
-	var min_content_h = 4 * (hdr_h + box_pad * 2) + total_rows * min_cell_h
-	var available_h = y_bottom - y0
-	## 计算实际 cell_h 和 group_gap 来填满可用空间
-	var group_gap = 10.0
-	var total_fixed = 4 * (hdr_h + box_pad * 2) + 3 * group_gap  ## 4个标题区 + 3个间距
-	var remaining = available_h - total_fixed
-	var cell_h = remaining / total_rows if total_rows > 0 else min_cell_h
-	cell_h = maxf(cell_h, min_cell_h)
-
-	var cur_y = y0
-
-	for sx in sx_order:
+	if beast_sx_tab >= 0 and beast_sx_tab < 4:
+		## 单组模式：显示指定四象
+		var sx = _SX_ORDER[beast_sx_tab]
 		var info = CardLore.get_si_xiang_info(sx)
 		var beasts = sx_groups[sx]
+		var cols = 4
+		var cell_w = grid_w / cols
+		var available_h = y_bottom - y0 - 30
 		var row_count = ceili(float(beasts.size()) / cols)
-		var box_h = hdr_h + row_count * cell_h + box_pad * 2
-		var border_color = Color(info["color"], 0.35)
+		var cell_h = minf(available_h / row_count, 50.0) if row_count > 0 else 40.0
+		cell_h = maxf(cell_h, 32.0)
 
-		## ── 四象分组边框 ──
-		_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, box_h), border_color)
+		## 组标题
+		var hdr_text = info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]) + " " + info["suit_cn"] + " (" + str(beasts.size()) + ")"
+		add_child(_make_label(hdr_text, Vector2(x0, y0), 18, info["color"],
+			HORIZONTAL_ALIGNMENT_LEFT, grid_w))
+		var cur_y = y0 + 28
 
-		## 四象标题（居中 + 放大字体）
-		var hdr_text = info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]) + " " + info["suit_cn"]
-		var hdr = _make_label(hdr_text, Vector2(x0 - box_pad, cur_y + 2), 16, info["color"],
-			HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2)
-		add_child(hdr)
-		cur_y += hdr_h
-
-		## 网格排列
 		for bi in range(beasts.size()):
 			var joker = beasts[bi]
 			var col = bi % cols
 			var row = bi / cols
 			var lx = x0 + col * cell_w
 			var ly = cur_y + row * cell_h
+			_add_beast_cell(joker, Vector2(lx, ly), cell_w, cell_h, 14)
+	else:
+		## 全部模式：4组紧凑排列
+		var cols = 6
+		var cell_w = grid_w / cols
+		var hdr_h = 24.0
+		var box_pad = 5.0
+		var group_gap = 8.0
 
-			var c = rarity_colors.get(joker.rarity, Color(0.7, 0.7, 0.7))
-			var lbl = Label.new()
-			lbl.text = joker.emoji + " " + _t(joker.joker_name)
-			lbl.position = Vector2(lx, ly)
-			lbl.custom_minimum_size = Vector2(cell_w - 4, cell_h - 2)
-			lbl.add_theme_color_override("font_color", c)
-			_loc().apply_font_to_label(lbl, 12)
-			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-			var j_ref = joker
-			var l_ref = lbl
-			lbl.mouse_entered.connect(func(): _show_beast_tooltip(j_ref, l_ref))
-			lbl.mouse_exited.connect(func(): _hide_card_tooltip())
-			add_child(lbl)
+		var total_rows = 0
+		for sx in _SX_ORDER:
+			total_rows += ceili(float(sx_groups[sx].size()) / cols)
+		var total_fixed = 4 * (hdr_h + box_pad * 2) + 3 * group_gap
+		var remaining = (y_bottom - y0) - total_fixed
+		var cell_h = remaining / total_rows if total_rows > 0 else 28.0
+		cell_h = clampf(cell_h, 26.0, 42.0)
 
-		cur_y += row_count * cell_h + box_pad + group_gap
+		var cur_y = y0
+		for sx in _SX_ORDER:
+			var info = CardLore.get_si_xiang_info(sx)
+			var beasts = sx_groups[sx]
+			var row_count = ceili(float(beasts.size()) / cols)
+			var box_h = hdr_h + row_count * cell_h + box_pad * 2
+			var border_color = Color(info["color"], 0.35)
 
-## ---------- 星宿网格 (垂直两端对齐) ----------
+			_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(grid_w + box_pad * 2, box_h), border_color)
 
-func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> void:
+			var hdr_text = info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]) + " " + info["suit_cn"]
+			add_child(_make_label(hdr_text, Vector2(x0 - box_pad, cur_y + 3), 14, info["color"],
+				HORIZONTAL_ALIGNMENT_CENTER, grid_w + box_pad * 2))
+			cur_y += hdr_h
+
+			for bi in range(beasts.size()):
+				var joker = beasts[bi]
+				var col = bi % cols
+				var row = bi / cols
+				var lx = x0 + col * cell_w
+				var ly = cur_y + row * cell_h
+				_add_beast_cell(joker, Vector2(lx, ly), cell_w, cell_h, 12)
+
+			cur_y += row_count * cell_h + box_pad + group_gap
+
+func _add_beast_cell(joker: JokerData, pos: Vector2, cell_w: float, cell_h: float, font_sz: int) -> void:
+	var c = _RARITY_COLORS.get(joker.rarity, Color(0.7, 0.7, 0.7))
+	var lbl = Label.new()
+	lbl.text = joker.emoji + " " + _t(joker.joker_name)
+	lbl.position = pos
+	lbl.custom_minimum_size = Vector2(cell_w - 4, cell_h - 2)
+	lbl.add_theme_color_override("font_color", c)
+	_loc().apply_font_to_label(lbl, font_sz)
+	lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var j_ref = joker
+	var original_c = c
+	lbl.mouse_entered.connect(func():
+		lbl.add_theme_color_override("font_color", Color(minf(original_c.r * 1.3, 1.0), minf(original_c.g * 1.3, 1.0), minf(original_c.b * 1.3, 1.0)))
+		_on_cell_hover("beast_" + j_ref.id, _build_beast_preview_rows(j_ref))
+	)
+	lbl.mouse_exited.connect(func():
+		lbl.add_theme_color_override("font_color", original_c)
+		_on_cell_unhover("beast_" + j_ref.id)
+	)
+	add_child(lbl)
+
+func _build_beast_preview_rows(joker: JokerData) -> Array:
+	var lore = CardLore.get_beast_lore(joker.id)
+	var sx_info = CardLore.get_si_xiang_info(lore["si_xiang"])
+	var lang = _loc().current_language
+	var is_cn = (lang == "中文")
+
+	var cat_emoji = CardLore.get_category_emoji(lore["category"])
+	var cat_name = CardLore.get_category_name(lore["category"], lang)
+	var display_name = _t(joker.joker_name)
+
+	return [
+		{"header": true, "value": joker.emoji + " " + display_name, "color": _RARITY_COLORS.get(joker.rarity, Color.WHITE), "size": 20},
+		{"divider": true},
+		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] + " (" + sx_info["element_cn"] + ")" if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
+		{"label": _t("Rarity"), "value": _RARITY_EMOJIS.get(joker.rarity, "") + " " + _t(_RARITY_NAMES.get(joker.rarity, "?")), "color": _RARITY_COLORS.get(joker.rarity, Color.WHITE)},
+		{"label": _t("Effect Type"), "value": cat_emoji + " " + cat_name},
+		{"divider": true},
+		{"label": _t("Lore"), "value": lore["lore_cn"] if is_cn else lore["lore_en"], "size": 11},
+		{"divider": true},
+		{"label": _t("Description"), "value": _t(joker.description) if is_cn else joker.description, "size": 12},
+	]
+
+## ---------- 星宿网格 V2 ----------
+
+func _fill_constellation_grid_v2(layout: Dictionary) -> void:
 	var all_planets = PlanetDatabase.get_all_planets()
 
 	## 数据库顺序：青龙7 + 玄武7 + 白虎7 + 朱雀7
@@ -502,18 +772,21 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: fl
 		{"sx": CardLore.SiXiang.VERMILLION_BIRD, "start": 21},
 	]
 
+	var x0 = layout["content_left"]
+	var y0 = layout["content_top"]
+	var grid_w = layout["grid_w"]
+	var y_bottom = layout["content_bottom"]
+
 	var cols = 7
-	var label_w = 130.0   ## 左侧四象标签宽度
-	var cell_w = (total_w - label_w) / cols
+	var label_w = 110.0
+	var cell_w = (grid_w - label_w) / cols
 	var box_pad = 6.0
 
-	## 计算垂直两端对齐：4组，均匀分布
 	var group_count = sx_map.size()
 	var available_h = y_bottom - y0
-	## 每组高度 = 可用高度 / 组数（包含间距）
 	var group_total_h = available_h / group_count
-	var row_h = group_total_h - box_pad * 2 - 4  ## 留出边框内边距和间距
-	row_h = maxf(row_h, 30.0)
+	var row_h = group_total_h - box_pad * 2 - 6
+	row_h = maxf(row_h, 34.0)
 	var box_h = row_h + box_pad * 2
 
 	var cur_y = y0
@@ -523,39 +796,48 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: fl
 		var info = CardLore.get_si_xiang_info(group["sx"])
 		var border_color = Color(info["color"], 0.3)
 
-		## ── 四象分组边框 ──
-		_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, box_h), border_color)
+		_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(grid_w + box_pad * 2, box_h), border_color)
 
-		## 四象标签（居中大字）
+		## 四象标签
 		add_child(_make_label(
 			info["emoji"] + " " + (_t(info["name_cn"]) if _loc().current_language == "中文" else info["name_en"]),
-			Vector2(x0, cur_y + box_pad), 15, info["color"],
+			Vector2(x0, cur_y + box_pad), 14, info["color"],
 			HORIZONTAL_ALIGNMENT_CENTER, label_w))
 
-		## 该组7个星宿
+		## 7个星宿
 		for ci in range(7):
 			var pi = group["start"] + ci
 			if pi >= all_planets.size(): break
 			var planet = all_planets[pi]
 			var hand_name = _t(PokerHand.get_hand_name(planet.hand_type))
 			var lx = x0 + label_w + ci * cell_w
+
+			## 星宿名
 			var lbl = Label.new()
 			lbl.text = planet.emoji + " " + _t(planet.planet_name)
-			lbl.position = Vector2(lx, cur_y + box_pad - 1)
+			lbl.position = Vector2(lx, cur_y + box_pad)
 			lbl.custom_minimum_size = Vector2(cell_w - 4, row_h / 2.0)
 			lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.7))
 			_loc().apply_font_to_label(lbl, 13)
 			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+
 			var p_ref = planet
-			var l_ref = lbl
-			lbl.mouse_entered.connect(func(): _show_constellation_tooltip(p_ref, l_ref))
-			lbl.mouse_exited.connect(func(): _hide_card_tooltip())
+			var p_sx = group["sx"]
+			var original_c = Color(0.75, 0.75, 0.7)
+			lbl.mouse_entered.connect(func():
+				lbl.add_theme_color_override("font_color", Color(0.95, 0.95, 0.9))
+				_on_cell_hover("planet_" + p_ref.id, _build_constellation_preview_rows(p_ref, p_sx))
+			)
+			lbl.mouse_exited.connect(func():
+				lbl.add_theme_color_override("font_color", original_c)
+				_on_cell_unhover("planet_" + p_ref.id)
+			)
 			add_child(lbl)
 
-			## 牌型名 (第二行)
+			## 牌型名
 			var sub = Label.new()
 			sub.text = "→ " + hand_name
-			sub.position = Vector2(lx + 8, cur_y + box_pad + 15)
+			sub.position = Vector2(lx + 6, cur_y + box_pad + 17)
 			sub.add_theme_color_override("font_color", Color(0.5, 0.5, 0.45))
 			_loc().apply_font_to_label(sub, 10)
 			sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -563,9 +845,28 @@ func _fill_constellation_grid(x0: float, y0: float, total_w: float, y_bottom: fl
 
 		cur_y += group_total_h
 
-## ---------- 法宝网格 (垂直两端对齐) ----------
+func _build_constellation_preview_rows(planet: PlanetData, sx: CardLore.SiXiang) -> Array:
+	var lang = _loc().current_language
+	var is_cn = (lang == "中文")
+	var sx_info = CardLore.get_si_xiang_info(sx)
+	var hand_name = _t(PokerHand.get_hand_name(planet.hand_type))
+	var level_info = HandLevel.get_level_info(planet.hand_type)
+	var level_str = "Lv." + str(level_info.get("level", 1))
 
-func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) -> void:
+	return [
+		{"header": true, "value": planet.emoji + " " + _t(planet.planet_name), "color": sx_info["color"], "size": 20},
+		{"divider": true},
+		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
+		{"label": _t("Hand Type"), "value": hand_name},
+		{"label": _t("Current Level"), "value": level_str, "color": Color(0.95, 0.85, 0.3)},
+		{"label": _t("Upgrade"), "value": "+" + str(planet.level_chips) + " Chips, +" + str(planet.level_mult) + " Mult"},
+		{"divider": true},
+		{"label": _t("Description"), "value": _t(planet.description) if is_cn else planet.description, "size": 12},
+	]
+
+## ---------- 法宝网格 V2 ----------
+
+func _fill_artifact_grid_v2(layout: Dictionary) -> void:
 	var all_tarots = TarotDatabase.get_all_tarots()
 	var relics: Array = []
 	var formations: Array = []
@@ -575,36 +876,39 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 		else:
 			formations.append(t)
 
+	var x0 = layout["content_left"]
+	var y0 = layout["content_top"]
+	var grid_w = layout["grid_w"]
+	var y_bottom = layout["content_bottom"]
+
 	var available_h = y_bottom - y0
 	var box_pad = 6.0
 	var gap_between = 15.0
 
-	## 计算行数
-	var relic_cols = 8
+	var relic_cols = 4
 	var relic_rows = ceili(float(relics.size()) / relic_cols)
-	var form_cols = 5
+	var form_cols = 4
 	var form_rows = ceili(float(formations.size()) / form_cols)
 
-	## 两个 section 按比例分配高度
 	var total_data_rows = relic_rows + form_rows
-	var fixed_h = 2 * (24.0 + box_pad * 2) + gap_between  ## 两个标题区 + 间距
+	var fixed_h = 2 * (28.0 + box_pad * 2) + gap_between
 	var remaining_h = available_h - fixed_h
-	var cell_h = remaining_h / total_data_rows if total_data_rows > 0 else 27.0
-	cell_h = maxf(cell_h, 27.0)
+	var cell_h = remaining_h / total_data_rows if total_data_rows > 0 else 32.0
+	cell_h = clampf(cell_h, 28.0, 50.0)
 
-	var relic_cell_w = total_w / relic_cols
-	var form_cell_w = total_w / form_cols
+	var relic_cell_w = grid_w / relic_cols
+	var form_cell_w = grid_w / form_cols
 
 	var cur_y = y0
 
 	## — 神器 —
-	var relic_box_h = 24.0 + relic_rows * cell_h + box_pad * 2
-	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, relic_box_h), Color(0.7, 0.35, 0.75, 0.3))
+	var relic_box_h = 28.0 + relic_rows * cell_h + box_pad * 2
+	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(grid_w + box_pad * 2, relic_box_h), Color(0.7, 0.35, 0.75, 0.3))
 
 	add_child(_make_label("⚱️ " + _t("Relics") + " (" + str(relics.size()) + ")",
-		Vector2(x0 - box_pad, cur_y + 4), 16, Color(0.7, 0.35, 0.75),
-		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
-	cur_y += 24
+		Vector2(x0 - box_pad, cur_y + 5), 16, Color(0.7, 0.35, 0.75),
+		HORIZONTAL_ALIGNMENT_CENTER, grid_w + box_pad * 2))
+	cur_y += 28
 
 	for i in range(relics.size()):
 		var tarot = relics[i]
@@ -612,29 +916,18 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 		var row = i / relic_cols
 		var lx = x0 + col * relic_cell_w
 		var ly = cur_y + row * cell_h
-		var lbl = Label.new()
-		lbl.text = tarot.emoji + " " + _t(tarot.tarot_name)
-		lbl.position = Vector2(lx, ly)
-		lbl.custom_minimum_size = Vector2(relic_cell_w - 4, cell_h - 2)
-		lbl.add_theme_color_override("font_color", Color(0.7, 0.35, 0.75))
-		_loc().apply_font_to_label(lbl, 13)
-		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-		var t_ref = tarot
-		var l_ref = lbl
-		lbl.mouse_entered.connect(func(): _show_artifact_tooltip(t_ref, l_ref))
-		lbl.mouse_exited.connect(func(): _hide_card_tooltip())
-		add_child(lbl)
+		_add_artifact_cell(tarot, Vector2(lx, ly), relic_cell_w, cell_h, Color(0.7, 0.35, 0.75))
 
 	cur_y += relic_rows * cell_h + box_pad + gap_between
 
 	## — 阵法 —
-	var form_box_h = 24.0 + form_rows * cell_h + box_pad * 2
-	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(total_w + box_pad * 2, form_box_h), Color(0.85, 0.25, 0.25, 0.3))
+	var form_box_h = 28.0 + form_rows * cell_h + box_pad * 2
+	_draw_section_box(Vector2(x0 - box_pad, cur_y), Vector2(grid_w + box_pad * 2, form_box_h), Color(0.85, 0.25, 0.25, 0.3))
 
 	add_child(_make_label("⚔️ " + _t("Formations") + " (" + str(formations.size()) + ")",
-		Vector2(x0 - box_pad, cur_y + 4), 16, Color(0.85, 0.25, 0.25),
-		HORIZONTAL_ALIGNMENT_CENTER, total_w + box_pad * 2))
-	cur_y += 24
+		Vector2(x0 - box_pad, cur_y + 5), 16, Color(0.85, 0.25, 0.25),
+		HORIZONTAL_ALIGNMENT_CENTER, grid_w + box_pad * 2))
+	cur_y += 28
 
 	for i in range(formations.size()):
 		var tarot = formations[i]
@@ -642,213 +935,45 @@ func _fill_artifact_grid(x0: float, y0: float, total_w: float, y_bottom: float) 
 		var row = i / form_cols
 		var lx = x0 + col * form_cell_w
 		var ly = cur_y + row * cell_h
-		var lbl = Label.new()
-		lbl.text = tarot.emoji + " " + _t(tarot.tarot_name)
-		lbl.position = Vector2(lx, ly)
-		lbl.custom_minimum_size = Vector2(form_cell_w - 4, cell_h - 2)
-		lbl.add_theme_color_override("font_color", Color(0.85, 0.25, 0.25))
-		_loc().apply_font_to_label(lbl, 13)
-		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-		var t_ref = tarot
-		var l_ref = lbl
-		lbl.mouse_entered.connect(func(): _show_artifact_tooltip(t_ref, l_ref))
-		lbl.mouse_exited.connect(func(): _hide_card_tooltip())
-		add_child(lbl)
+		_add_artifact_cell(tarot, Vector2(lx, ly), form_cell_w, cell_h, Color(0.85, 0.25, 0.25))
 
-## ========== 遮罩系统 (Tooltip) ==========
+func _add_artifact_cell(tarot: TarotData, pos: Vector2, cell_w: float, cell_h: float, base_color: Color) -> void:
+	var lbl = Label.new()
+	lbl.text = tarot.emoji + " " + _t(tarot.tarot_name)
+	lbl.position = pos
+	lbl.custom_minimum_size = Vector2(cell_w - 4, cell_h - 2)
+	lbl.add_theme_color_override("font_color", base_color)
+	_loc().apply_font_to_label(lbl, 13)
+	lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 
-func _show_card_tooltip(anchor: Label, rows: Array) -> void:
-	_hide_card_tooltip()
-	## 计算位置：anchor 右侧，屏幕越界则翻到左侧
-	var ax = anchor.global_position.x + anchor.size.x + 8
-	var ay = anchor.global_position.y
-	if ax + TOOLTIP_W > SCREEN_W - 20:
-		ax = anchor.global_position.x - TOOLTIP_W - 8
-	if ay < 20: ay = 20
+	var t_ref = tarot
+	var original_c = base_color
+	lbl.mouse_entered.connect(func():
+		lbl.add_theme_color_override("font_color", Color(minf(original_c.r * 1.3, 1.0), minf(original_c.g * 1.3, 1.0), minf(original_c.b * 1.3, 1.0)))
+		_on_cell_hover("artifact_" + t_ref.id, _build_artifact_preview_rows(t_ref))
+	)
+	lbl.mouse_exited.connect(func():
+		lbl.add_theme_color_override("font_color", original_c)
+		_on_cell_unhover("artifact_" + t_ref.id)
+	)
+	add_child(lbl)
 
-	var panel = ColorRect.new()
-	panel.z_index = 260
-	panel.position = Vector2(ax, ay)
-	panel.color = Color(0.04, 0.06, 0.05, 0.96)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var bw = 1.5
-	var bc_color = Color(0.95, 0.85, 0.3, 0.4)
-
-	var row_y = 7.0
-	var pad_x = 8.0
-	var label_w = 75.0
-	var value_w = TOOLTIP_W - label_w - pad_x * 2 - 5
-
-	for r in rows:
-		var is_header = r.get("header", false)
-		var is_divider = r.get("divider", false)
-
-		if is_divider:
-			var div = ColorRect.new()
-			div.position = Vector2(pad_x, row_y)
-			div.size = Vector2(TOOLTIP_W - pad_x * 2, 1)
-			div.color = Color(0.95, 0.85, 0.3, 0.15)
-			div.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			panel.add_child(div)
-			row_y += 4
-			continue
-
-		if is_header:
-			var h_lbl = Label.new()
-			h_lbl.text = r.get("value", "")
-			h_lbl.position = Vector2(pad_x, row_y)
-			h_lbl.custom_minimum_size = Vector2(TOOLTIP_W - pad_x * 2, 0)
-			h_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			h_lbl.add_theme_color_override("font_color", r.get("color", Color(0.95, 0.85, 0.3)))
-			_loc().apply_font_to_label(h_lbl, r.get("size", 14))
-			h_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			panel.add_child(h_lbl)
-			row_y += r.get("size", 14) + 5
-			continue
-
-		## 普通键值行
-		var k_lbl = Label.new()
-		k_lbl.text = r.get("label", "")
-		k_lbl.position = Vector2(pad_x, row_y)
-		k_lbl.custom_minimum_size = Vector2(label_w, 0)
-		k_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.55))
-		_loc().apply_font_to_label(k_lbl, 10)
-		k_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_child(k_lbl)
-
-		var v_lbl = Label.new()
-		v_lbl.text = r.get("value", "")
-		v_lbl.position = Vector2(pad_x + label_w + 5, row_y)
-		v_lbl.custom_minimum_size = Vector2(value_w, 0)
-		v_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		v_lbl.add_theme_color_override("font_color", r.get("color", Color(0.85, 0.85, 0.8)))
-		_loc().apply_font_to_label(v_lbl, r.get("size", 10))
-		v_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_child(v_lbl)
-
-		## 估算行高（多行文本）
-		var text_len = r.get("value", "").length()
-		var approx_chars_per_line = int(value_w / 7)
-		var line_count = maxi(1, ceili(float(text_len) / approx_chars_per_line))
-		row_y += line_count * 13 + 3
-
-	## 设置面板大小
-	var total_h = row_y + 7
-	## 确保不超出屏幕底部
-	if ay + total_h > SCREEN_H - 10:
-		ay = SCREEN_H - 10 - total_h
-		if ay < 10: ay = 10
-		panel.position.y = ay
-	panel.size = Vector2(TOOLTIP_W, total_h)
-
-	## 金边
-	for edge in [
-		[Vector2(0, 0), Vector2(TOOLTIP_W, bw)],
-		[Vector2(0, total_h - bw), Vector2(TOOLTIP_W, bw)],
-		[Vector2(0, 0), Vector2(bw, total_h)],
-		[Vector2(TOOLTIP_W - bw, 0), Vector2(bw, total_h)],
-	]:
-		var b = ColorRect.new()
-		b.position = edge[0]; b.size = edge[1]; b.color = bc_color
-		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_child(b)
-
-	_tooltip_node = panel
-	add_child(panel)
-
-func _hide_card_tooltip() -> void:
-	if _tooltip_node and is_instance_valid(_tooltip_node):
-		_tooltip_node.queue_free()
-	_tooltip_node = null
-
-## ---------- 异兽 tooltip ----------
-
-func _show_beast_tooltip(joker: JokerData, anchor: Label) -> void:
-	var lore = CardLore.get_beast_lore(joker.id)
-	var sx_info = CardLore.get_si_xiang_info(lore["si_xiang"])
-	var lang = _loc().current_language
-	var is_cn = (lang == "中文")
-
-	var rarity_names = {0: "Common", 1: "Uncommon", 2: "Rare", 3: "Legendary"}
-	var rarity_colors = {
-		0: Color(0.3, 0.9, 0.4), 1: Color(0.3, 0.6, 0.95),
-		2: Color(0.9, 0.3, 0.3), 3: Color(0.95, 0.8, 0.2),
-	}
-	var rarity_emojis = {0: "🟢", 1: "🔵", 2: "🟣", 3: "🟡"}
-
-	var cat_emoji = CardLore.get_category_emoji(lore["category"])
-	var cat_name = CardLore.get_category_name(lore["category"], lang)
-
-	var display_name = _t(joker.joker_name)
-
-	var rows: Array = [
-		{"header": true, "value": joker.emoji + " " + display_name, "color": rarity_colors.get(joker.rarity, Color.WHITE), "size": 14},
-		{"divider": true},
-		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] + " (" + sx_info["element_cn"] + ")" if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
-		{"label": _t("Rarity"), "value": rarity_emojis.get(joker.rarity, "") + " " + _t(rarity_names.get(joker.rarity, "?")), "color": rarity_colors.get(joker.rarity, Color.WHITE)},
-		{"label": _t("Effect Type"), "value": cat_emoji + " " + cat_name},
-		{"divider": true},
-		{"label": _t("Lore"), "value": lore["lore_cn"] if is_cn else lore["lore_en"], "size": 9},
-		{"divider": true},
-		{"label": _t("Description"), "value": _t(joker.description) if is_cn else joker.description},
-	]
-	_show_card_tooltip(anchor, rows)
-
-## ---------- 星宿 tooltip ----------
-
-func _show_constellation_tooltip(planet: PlanetData, anchor: Label) -> void:
-	var lang = _loc().current_language
-	var is_cn = (lang == "中文")
-	## 根据索引确定四象
-	var all_planets = PlanetDatabase.get_all_planets()
-	var idx = -1
-	for i in range(all_planets.size()):
-		if all_planets[i].id == planet.id:
-			idx = i; break
-	var sx_order = [
-		CardLore.SiXiang.AZURE_DRAGON,
-		CardLore.SiXiang.BLACK_TORTOISE,
-		CardLore.SiXiang.WHITE_TIGER,
-		CardLore.SiXiang.VERMILLION_BIRD,
-	]
-	var sx = sx_order[clampi(idx / 7, 0, 3)]
-	var sx_info = CardLore.get_si_xiang_info(sx)
-
-	var hand_name = _t(PokerHand.get_hand_name(planet.hand_type))
-	var level_info = HandLevel.get_level_info(planet.hand_type)
-	var level_str = "Lv." + str(level_info.get("level", 1))
-
-	var rows: Array = [
-		{"header": true, "value": planet.emoji + " " + _t(planet.planet_name), "color": sx_info["color"], "size": 14},
-		{"divider": true},
-		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
-		{"label": _t("Hand Type"), "value": hand_name},
-		{"label": _t("Current Level"), "value": level_str, "color": Color(0.95, 0.85, 0.3)},
-		{"label": _t("Upgrade"), "value": "+" + str(planet.level_chips) + " Chips, +" + str(planet.level_mult) + " Mult"},
-		{"divider": true},
-		{"label": _t("Description"), "value": _t(planet.description) if is_cn else planet.description},
-	]
-	_show_card_tooltip(anchor, rows)
-
-## ---------- 法宝 tooltip ----------
-
-func _show_artifact_tooltip(tarot: TarotData, anchor: Label) -> void:
+func _build_artifact_preview_rows(tarot: TarotData) -> Array:
 	var is_cn = (_loc().current_language == "中文")
 	var type_name = _t("Relic") if tarot.artifact_type == TarotData.ArtifactType.RELIC else _t("Formation")
 	var type_color = tarot.get_rarity_color()
 
 	var rows: Array = [
-		{"header": true, "value": tarot.emoji + " " + _t(tarot.tarot_name), "color": type_color, "size": 14},
+		{"header": true, "value": tarot.emoji + " " + _t(tarot.tarot_name), "color": type_color, "size": 20},
 		{"divider": true},
 		{"label": _t("Type"), "value": type_name, "color": type_color},
 		{"label": _t("Cost"), "value": "$" + str(tarot.cost), "color": Color(0.95, 0.8, 0.2)},
 		{"divider": true},
-		{"label": _t("Description"), "value": _t(tarot.description) if is_cn else tarot.description},
+		{"label": _t("Description"), "value": _t(tarot.description) if is_cn else tarot.description, "size": 12},
 	]
 	if tarot.needs_selection:
 		rows.insert(4, {"label": _t("Selection"), "value": str(tarot.min_select) + "~" + str(tarot.max_select) + " " + _t("cards")})
-	_show_card_tooltip(anchor, rows)
+	return rows
 
 ## ========== 教程 ==========
 
@@ -907,7 +1032,11 @@ func _draw_section_box(pos: Vector2, box_size: Vector2, border_color: Color) -> 
 		add_child(b)
 
 func _clear() -> void:
-	_hide_card_tooltip()
+	_preview_panel = null
+	_hovered_item_key = ""
+	if _preview_tween and _preview_tween.is_valid():
+		_preview_tween.kill()
+	_preview_tween = null
 	for child in get_children(): child.queue_free()
 
 func _add_bg() -> void:
