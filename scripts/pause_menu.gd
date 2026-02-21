@@ -4,6 +4,7 @@ extends Node2D
 
 signal resume_game()
 signal new_game()
+@warning_ignore("unused_signal")
 signal quit_game()
 signal continue_game()
 signal return_to_title()
@@ -183,7 +184,7 @@ func _build_main_menu() -> void:
 
 	for i in range(btn_count):
 		add_child(_make_button(buttons[i]["text"],
-			Vector2(panel_cx - cur_btn_w / 2, start_y + i * BTN_SPACING),
+			Vector2(panel_cx - cur_btn_w / 2.0, start_y + i * BTN_SPACING),
 			22, cur_btn_w, BTN_H, buttons[i]["callback"]))
 
 	add_child(_make_label(GameConfig.VERSION_LABEL,
@@ -355,7 +356,7 @@ func _open_collection() -> void:
 		{"label": "🔮 " + _t("Artifact Cards"), "tab": CollTab.ARTIFACTS, "color": Color(0.7, 0.35, 0.75)},
 	]
 	var tab_w = 220.0; var tab_gap = 14.0
-	var tab_total = tabs.size() * tab_w + (tabs.size() - 1) * tab_gap
+	var _tab_total = tabs.size() * tab_w + (tabs.size() - 1) * tab_gap
 	var tab_start_x = layout["content_left"]
 	for i in range(tabs.size()):
 		var tx = tab_start_x + i * (tab_w + tab_gap)
@@ -574,7 +575,7 @@ func _set_preview_content(rows: Array) -> void:
 
 		## 估算行高
 		var text_len = r.get("value", "").length()
-		var approx_chars = int(value_w / 8)
+		var approx_chars = int(value_w / 8.0)
 		var line_count = maxi(1, ceili(float(text_len) / approx_chars))
 		row_y += line_count * 16 + 5
 
@@ -750,7 +751,7 @@ func _build_beast_preview_rows(joker: JokerData) -> Array:
 	return [
 		{"header": true, "value": joker.emoji + " " + display_name, "color": _RARITY_COLORS.get(joker.rarity, Color.WHITE), "size": 20},
 		{"divider": true},
-		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (sx_info["name_cn"] + sx_info["suit_cn"] + " (" + sx_info["element_cn"] + ")" if is_cn else sx_info["name_en"]), "color": sx_info["color"]},
+		{"label": _t("Si Xiang"), "value": sx_info["emoji"] + " " + (str(sx_info["name_cn"]) + sx_info["suit_cn"] + " (" + sx_info["element_cn"] + ")" if is_cn else str(sx_info["name_en"])), "color": sx_info["color"]},
 		{"label": _t("Rarity"), "value": _RARITY_EMOJIS.get(joker.rarity, "") + " " + _t(_RARITY_NAMES.get(joker.rarity, "?")), "color": _RARITY_COLORS.get(joker.rarity, Color.WHITE)},
 		{"label": _t("Effect Type"), "value": cat_emoji + " " + cat_name},
 		{"divider": true},

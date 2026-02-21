@@ -459,7 +459,7 @@ func _draw_initial_hand() -> void:
 	if reel_count > 0 and deck.remaining() >= reel_count:
 		play_button.disabled = true
 		discard_button.disabled = true
-		var jokers = joker_slot.get_owned_jokers().map(func(j): return j.joker_data)
+		var jokers = joker_slot.get_owned_jokers()
 		reel_draw.start_reel(GS.current_ante, deck, jokers)
 	else:
 		## 牌堆不足时直接随机抽
@@ -488,7 +488,7 @@ func _update_enhancement_info() -> void:
 	var enhance_texts: PackedStringArray = []
 	for card in selected:
 		if card.card_data and card.card_data.enhancement != CardData.Enhancement.NONE:
-			var name = card.card_data.get_display_name()
+			var card_name = card.card_data.get_display_name()
 			var enhance_name: String
 			var enhance_desc: String
 			var emoji: String
@@ -505,7 +505,7 @@ func _update_enhancement_info() -> void:
 					emoji = "🎨"
 					enhance_name = Loc.i().t("Polychrome")
 					enhance_desc = "×1.5 " + Loc.i().t("Mult")
-			enhance_texts.append(emoji + " " + enhance_name + " " + name + " " + enhance_desc)
+			enhance_texts.append(emoji + " " + enhance_name + " " + card_name + " " + enhance_desc)
 	if enhance_texts.size() > 0:
 		info_label.text = ", ".join(enhance_texts)
 		info_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.2))

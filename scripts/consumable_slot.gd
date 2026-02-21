@@ -177,7 +177,7 @@ func _draw_item_card(x: float, y: float, item: Dictionary, index: int) -> void:
 	var idx = index
 	area.mouse_entered.connect(func(): _on_hover(idx))
 	area.mouse_exited.connect(func(): _on_unhover())
-	area.input_event.connect(func(vp, ev, si): _on_click(idx, ev))
+	area.input_event.connect(func(_vp, ev, _si): _on_click(idx, ev))
 	add_child(area)
 
 func _on_hover(index: int) -> void:

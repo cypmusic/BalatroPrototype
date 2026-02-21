@@ -230,12 +230,12 @@ func _build_sixiang_counter() -> void:
 	for i in range(4):
 		var sx = sx_list[i]
 		var color = HexagramDatabase.SIXIANG_COLORS[sx]
-		var name = HexagramDatabase.SIXIANG_NAMES[sx]
+		var sx_name = HexagramDatabase.SIXIANG_NAMES[sx]
 		var emoji = HexagramDatabase.SIXIANG_EMOJIS[sx]
 		var count = counts[sx]
 
 		var lbl = Label.new()
-		lbl.text = emoji + " " + _t(name) + ": " + str(count)
+		lbl.text = emoji + " " + _t(sx_name) + ": " + str(count)
 		lbl.position = Vector2(base_x, base_y + i * 26)
 		lbl.add_theme_font_size_override("font_size", 16)
 		lbl.add_theme_color_override("font_color", color)
@@ -244,7 +244,7 @@ func _build_sixiang_counter() -> void:
 		add_child(lbl)
 
 ## 构建单个卦象选择卡牌
-func _build_hexagram_card(x: float, kingwen: int, index: int) -> void:
+func _build_hexagram_card(x: float, kingwen: int, _index: int) -> void:
 	var data = HexagramDatabase.get_hexagram(kingwen)
 	if data.is_empty():
 		return

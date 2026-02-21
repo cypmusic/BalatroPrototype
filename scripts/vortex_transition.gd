@@ -147,7 +147,7 @@ func _process(delta: float) -> void:
 		Phase.PIXEL_OUT:
 			_process_pixel_out(delta)
 
-func _process_vortex(delta: float) -> void:
+func _process_vortex(_delta: float) -> void:
 	var t = clampf(timer / VORTEX_DURATION, 0.0, 1.0)
 	## 使用 ease-in 加速吸入
 	var pull_progress = t * t * t

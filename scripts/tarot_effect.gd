@@ -7,7 +7,7 @@ extends RefCounted
 ## 执行法宝牌效果
 ## 返回 { "message": String, "color": Color }
 static func apply(tarot: TarotData, selected_cards: Array,
-		hand_ref: Node2D, consumable_slot_ref: Node2D, deck_ref: Node = null) -> Dictionary:
+		hand_ref: Node2D, consumable_slot_ref: Node2D, _deck_ref: Node = null) -> Dictionary:
 
 	var result := {"message": "", "color": Color(0.7, 0.35, 0.75)}
 	var loc = Loc.i()

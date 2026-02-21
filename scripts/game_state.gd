@@ -118,7 +118,7 @@ func advance_blind() -> void:
 
 func calculate_income(won: bool) -> int:
 	var income = GameConfig.BASE_INCOME
-	var interest = mini(int(money / 5), GameConfig.INTEREST_CAP)
+	var interest = mini(money / 5, GameConfig.INTEREST_CAP)
 	income += interest
 	if won:
 		income += GameConfig.WIN_BONUS

@@ -261,8 +261,8 @@ static func evaluate(cards: Array) -> Dictionary:
 		## 重新理解: TWO_THREE = 一个对子+一个三条(与FULL_HOUSE_PLUS相同结构，不同命名)
 		## 此处简化: THREE_OF_A_KIND + 散牌(6卡场景)
 		if count_groups.has(3):
-			var three_cards = _find_n_of_a_kind(cards, rank_counts, 3)
-			return {"type": HandType.THREE_OF_A_KIND, "scoring_cards": three_cards}
+			var three_cards_6 = _find_n_of_a_kind(cards, rank_counts, 3)
+			return {"type": HandType.THREE_OF_A_KIND, "scoring_cards": three_cards_6}
 
 		## 三对 (2+2+2): 三组对子
 		if count_groups.has(2) and count_groups.get(2, 0) >= 3:
@@ -270,17 +270,17 @@ static func evaluate(cards: Array) -> Dictionary:
 
 		## 两对 + 散牌
 		if count_groups.has(2) and count_groups.get(2, 0) >= 2:
-			var pair_cards = _find_pairs(cards, rank_counts, 2)
-			return {"type": HandType.TWO_PAIR, "scoring_cards": pair_cards}
+			var pair_cards_6 = _find_pairs(cards, rank_counts, 2)
+			return {"type": HandType.TWO_PAIR, "scoring_cards": pair_cards_6}
 
 		## 对子
 		if count_groups.has(2):
-			var pair_cards = _find_n_of_a_kind(cards, rank_counts, 2)
-			return {"type": HandType.PAIR, "scoring_cards": pair_cards}
+			var pair_cards_6b = _find_n_of_a_kind(cards, rank_counts, 2)
+			return {"type": HandType.PAIR, "scoring_cards": pair_cards_6b}
 
 		## 高牌
-		var highest = _find_highest(cards)
-		return {"type": HandType.HIGH_CARD, "scoring_cards": [highest]}
+		var highest_6 = _find_highest(cards)
+		return {"type": HandType.HIGH_CARD, "scoring_cards": [highest_6]}
 
 	## ====== 5卡判定（经典牌型） ======
 	if n >= 5:

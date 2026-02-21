@@ -35,7 +35,7 @@ static func apply_to_result(result: Dictionary, boss, hands_played: int = 0) -> 
 
 		BlindData.BossEffect.DEBUFF_FIRST_HAND:
 			if hands_played == 0:
-				result["total_chips"] = int(result["total_chips"] / 2)
+				result["total_chips"] = result["total_chips"] / 2
 				result["final_score"] = int(result["total_chips"] * result["total_mult"])
 
 

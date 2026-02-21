@@ -106,7 +106,8 @@ func _draw() -> void:
 		bars_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, bars_color)
 
 	## ─── 拍点指示器（4个点 = 1小节内4拍）───
-	var beat_spacing = BAR_W / 16.0  ## 16小节对应16段
+	@warning_ignore("unused_variable")
+	var beat_spacing = BAR_W / 16.0  ## 16小节对应16段(保留供后续拍线绘制)
 	var current_beat = bc.current_beat
 	var beat_progress = bc.get_beat_progress()
 

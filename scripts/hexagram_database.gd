@@ -202,6 +202,7 @@ static func get_upper_trigram(bin_idx: int) -> int:
 
 ## 获取卦的下卦（内卦）
 static func get_lower_trigram(bin_idx: int) -> int:
+	@warning_ignore("integer_division")
 	return bin_idx / 8
 
 ## 获取卦的四象归属（基于上卦）
@@ -225,6 +226,7 @@ static func get_yao_string(kingwen: int) -> String:
 	var bin_idx = kingwen_to_bin(kingwen)
 	if bin_idx < 0:
 		return "??????"
+	@warning_ignore("integer_division")
 	var lower = bin_idx / 8
 	var upper = bin_idx % 8
 	var result = ""

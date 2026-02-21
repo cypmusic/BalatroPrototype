@@ -27,8 +27,8 @@ enum Seal {
 	BLACK_TORTOISE,  ## 玄武印 — 留在手中时 +5 Mult
 }
 
-@export var suit: Suit
-@export var rank: Rank
+@export var suit: Suit = Suit.HEARTS
+@export var rank: Rank = Rank.ACE
 @export var enhancement: Enhancement = Enhancement.NONE
 @export var seal: Seal = Seal.NONE
 

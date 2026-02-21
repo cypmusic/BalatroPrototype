@@ -44,6 +44,7 @@ enum BossEffect {
 ## Boss盲注数据类
 ## ============================================================
 class BossBlind:
+	@warning_ignore("shadowed_variable")
 	var name: String
 	var effect: BossEffect
 	var description: String

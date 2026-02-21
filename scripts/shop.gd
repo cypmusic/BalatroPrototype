@@ -412,7 +412,7 @@ func _build_held_consumables(parent: Node2D) -> void:
 		var idx = i
 		area.mouse_entered.connect(func(): _on_cons_hover(idx))
 		area.mouse_exited.connect(func(): _on_unhover())
-		area.input_event.connect(func(vp, ev, si): _on_cons_click(idx, ev))
+		area.input_event.connect(func(_vp, ev, _si): _on_cons_click(idx, ev))
 		parent.add_child(area)
 
 ## ========== 通用卡牌绘制（RichTextLabel 确保换行）==========
@@ -518,7 +518,7 @@ func _add_buy_area(x: float, y: float, w: float, h: float, item_type: String, in
 	var t = item_type; var idx = index
 	area.mouse_entered.connect(func(): _on_buy_hover(t, idx))
 	area.mouse_exited.connect(func(): _on_unhover())
-	area.input_event.connect(func(vp, ev, si): _on_buy_click(t, idx, ev))
+	area.input_event.connect(func(_vp, ev, _si): _on_buy_click(t, idx, ev))
 	add_child(area)
 
 func _add_sell_area(x: float, y: float, w: float, h: float, item_type: String, index: int) -> void:
@@ -534,7 +534,7 @@ func _add_sell_area(x: float, y: float, w: float, h: float, item_type: String, i
 	var t = item_type; var idx = index
 	area.mouse_entered.connect(func(): _on_sell_hover(t, idx))
 	area.mouse_exited.connect(func(): _on_unhover())
-	area.input_event.connect(func(vp, ev, si): _on_sell_click(t, idx, ev))
+	area.input_event.connect(func(_vp, ev, _si): _on_sell_click(t, idx, ev))
 	add_child(area)
 
 ## ========== 粒子 ==========
